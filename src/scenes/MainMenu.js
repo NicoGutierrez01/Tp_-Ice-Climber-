@@ -18,15 +18,14 @@ export class MainMenu extends Scene
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         }).setOrigin(0.5);
-
-        const buttonplayer2 =this.add.text(512, 500, '2 player game', {
+        
+        this.add.text(512, 520, '2 player game', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         }).setOrigin(0.5);
 
         buttonplayer1.setInteractive();
-        buttonplayer2.setInteractive();
 
         buttonplayer1.on('pointerdown', () => {
 
@@ -34,10 +33,5 @@ export class MainMenu extends Scene
 
         });
 
-        buttonplayer2.on('pointerdown', () => {
-
-            this.scene.start('Game');
-
-        });
     }
 }

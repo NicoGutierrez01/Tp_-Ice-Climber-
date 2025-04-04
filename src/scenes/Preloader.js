@@ -49,28 +49,41 @@ export class Preloader extends Scene
         this.load.image('6', '6.png');
         this.load.image('7', '7.png');
         this.load.image('8', '8.png');
+        this.load.image('bloqueverde', 'bloqueverde.png');
+        this.load.image('bloqueazul', 'bloqueazul.png');
+        this.load.image('bloquemarron', 'bloquemarron.png');
         this.load.image('bloqueverde2', 'bloqueverde2.png');
         this.load.image('bloqueazul2', 'bloqueazul2.png');
-        this.load.image('bloquemarro2', 'bloquemarro2.png');
+        this.load.image('bloquemarron2', 'bloquemarron2.png');
+        this.load.image('bloquehielo', 'bloquehielo.png');
+        this.load.image('bloquehielo2', 'bloquehielo2.png');
+        this.load.image('nubelarga', 'nubelarga.png');
 
 
         this.load.spritesheet('player', 'player.png', {
-            frameWidth: 31,
+            frameWidth: 32,
             frameHeight: 40
         });
 
-        this.load.spritesheet('bloqueverde', 'bloqueverde.png', {
-            frameWidth: 96,
+        this.load.spritesheet('ataque', 'ataque.png', {
+            frameWidth: 39,
+            frameHeight: 57
+        });
+
+        this.load.spritesheet('bloqueverdeanim', 'bloqueverdeanim.png', {
+            frameWidth: 16,
             frameHeight: 16
         });
-        this.load.spritesheet('bloqueazul', 'bloqueazul.png', {
-            frameWidth: 96,
+
+        this.load.spritesheet('bloquemarronanim', 'bloquemarronanim.png', {
+            frameWidth: 16,
             frameHeight: 16
-        }); 
-        this.load.spritesheet('bloquemarro', 'bloquemarro.png', {
-            frameWidth: 96,
-            frameHeight: 16 
-           });
+        });
+
+        this.load.spritesheet('bloqueazulanim', 'bloqueazulanim.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
     }
 
     create ()

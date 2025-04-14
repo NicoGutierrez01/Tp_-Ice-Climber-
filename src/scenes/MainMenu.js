@@ -9,8 +9,7 @@ export class MainMenu extends Scene
 
     create ()
     {
-        this.add.image(512, 384, 'background');
-
+        this.cameras.main.setBackgroundColor("000000");
         this.add.image(512, 300, 'logo').setScale(0.2);
 
         const buttonplayer1 =this.add.text(512, 460, '1 player game', {

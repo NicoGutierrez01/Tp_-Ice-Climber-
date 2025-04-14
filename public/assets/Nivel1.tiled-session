@@ -1,0 +1,91 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "Nivel1.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "": {
+            "scaleInEditor": 1
+        },
+        "#copos2": {
+            "scaleInEditor": 1
+        },
+        "#spritesheet": {
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 237.66666666666669,
+                "y": 1469.3333333333333
+            }
+        },
+        "Nivel1.tmx#bloques": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx#copos": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#copos2": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#hielo": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx#nube": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx#numeros": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#numeros2": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#paredazul": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#paredmarron": {
+            "scaleInDock": 1
+        },
+        "Nivel1.tmx#paredverde": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx#paredverdes": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Nivel1.tmx#spritesheet": {
+            "scaleInDock": 1
+        }
+    },
+    "last.exportedFilePath": "C:/Users/Usuario/Desktop/Programacion/Tp_Ice-Climber/public/assets",
+    "last.imagePath": "C:/Users/Usuario/Desktop/Tiled",
+    "map.height": 130,
+    "map.lastUsedExportFilter": "Todos los archivos (*)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 32,
+    "openFiles": [
+        "Nivel1.tmx"
+    ],
+    "project": "Nivel1.tiled-project",
+    "property.type": "object",
+    "recentFiles": [
+        "Nivel1.tmx"
+    ],
+    "tileset.embedInMap": true,
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}

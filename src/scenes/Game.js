@@ -1,4 +1,8 @@
 import { Scene } from 'phaser';
+import { PajaroBonus } from '../objetos/PajarosBonus';
+import { Nubes } from '../objetos/Nubes';
+import { HileraBloques } from '../objetos/HileraBloques';
+import { Yeti } from '../objetos/Yeti';
 
 export class Game extends Scene {
     constructor() {
@@ -7,307 +11,403 @@ export class Game extends Scene {
 
     create() {
         this.cameras.main.setBackgroundColor("000000");
+        const screenW = this.scale.width;
 
-        this.suelo = this.physics.add.staticGroup();
-        this.suelo.create(512, 768, 'suelo').setScale(1).refreshBody();
+        this.scenePaused = false;
 
-        this.plataformas = this.physics.add.staticGroup();
+        this.bonusActive = false;
+        this.bonusTimeLeft = 40000;
+        this.bonusStartTime = 0;
+        this.bonusTimer = null;
 
-        const filas2 = [
-            { y: -540, tipo: 'azul2', patrones: [9, 3, 9, 3, 9, 3, 9, 3] }, // Ejemplo: 3 bloques, espacio de 2, 2 bloques, espacio de 3
-            { y: -680, tipo: 'azul2', patrones: [-2, 10, 5, 6, 7, 6, 5, 5] },     // Otro ejemplo con diferente patrón
-            { y: -980, tipo: 'azul2', patrones: [0, 25, 6, 20] },
-            { y: -1004, tipo: 'azul2', patrones: [0, 6, 9, 200] },
-            { y: -1113, tipo: 'azul2', patrones: [0, 30, 4, 200] },
-            { y: -1137, tipo: 'azul2', patrones: [0, 15, 10, 200] },
-            { y: -1413, tipo: 'azul2', patrones: [0, 23, 5, 200] },
-            { y: -1438, tipo: 'azul2', patrones: [0, 10, 4, 200] },
-            { y: -1521, tipo: 'azul2', patrones: [0, 26, 3, 200] },
-            { y: -1573, tipo: 'azul2', patrones: [0, 17, 3, 200] },
-            { y: -1659, tipo: 'azul2', patrones: [0, 20, 4, 200] },
-            { y: -1793, tipo: 'azul2', patrones: [0, 8, 12, 4, 11,200] },
-        ];
-        
-        const crearFilaConEspacios = (y, tipo, patrones) => {
-            let sprite = `bloque${tipo}`;
-            let xInicial = 12; // Margen izquierdo
-            let espacioBloque = 16 * 1.5; // Tamaño del bloque con escala 1.5
-        
-            patrones.forEach((cantidad, index) => {
-                if (index % 2 === 0) {
-                    // Es un grupo de bloques
-                    for (let i = 0; i < cantidad; i++) {
-                        let bloque = this.plataformas.create(xInicial + i * espacioBloque, y, sprite).setScale(1.5);
-                        bloque.setFrame(0);
-                    }
-                }
-                // Mover la posición inicial sumando los espacios y bloques ya colocados
-                xInicial += cantidad * espacioBloque;
-            });
-        
-            // Llenar el resto con bloques
-            while (xInicial < 1024 - 50) {
-                let bloque = this.plataformas.create(xInicial, y, sprite).setScale(1.5);
-                bloque.setFrame(0);
-                bloque.setImmovable(true);
-                xInicial += espacioBloque;
-            }
-        };
-        
-        // Crear filas con los patrones definidos
-        filas2.forEach(fila => crearFilaConEspacios(fila.y, fila.tipo, fila.patrones));
-
-        const filas = [
-            { y: 740, tipo: 'verde', cantidad: 33 },
-            { y: 580, tipo: 'verde', cantidad: 100 },
-            { y: 420, tipo: 'marron', cantidad: 100 },
-            { y: 260, tipo: 'marron', cantidad: 100 },
-            { y: 100, tipo: 'marron', cantidad: 100 },
-            { y: -60, tipo: 'azul', cantidad: 100 },
-            { y: -220, tipo: 'azul', cantidad: 100 },
-            { y: -380, tipo: 'azul', cantidad: 100 },
-        ];
-
-        const crearFila = (y, cantidad, tipo) => {
-            let anchoTotal = cantidad * 24;
-            let xInicial = (1024 - anchoTotal) / 2;
-            let sprite = `bloque${tipo}`;
-        
-            for (let i = 0; i < cantidad; i++) {
-                let bloque = this.plataformas.create(xInicial + i * 24, y, sprite).setScale(1.5);
-                bloque.setFrame(0);
-                if (tipo !== 'azul2') {
-                    bloque.vida = 1;
-                }
-            }
-        };
-        // Crear todas las filas usando un bucle
-        filas.forEach(fila => crearFila(fila.y, fila.cantidad, fila.tipo));
-
-        
-        this.add.image(54, 660, 'paredverdeleft').setScale(1.7); 
-        this.add.image(969, 660, 'paredverderight').setScale(1.7); 
-        this.add.image(54, 500, 'paredverdeleft').setScale(1.7); 
-        this.add.image(969, 500, 'paredverderight').setScale(1.7); 
-        this.add.image(68, 340, 'paredmarronleft').setScale(1.7); 
-        this.add.image(956, 340, 'paredmarronright').setScale(1.7); 
-        this.add.image(68, 180, 'paredmarronleft').setScale(1.7); 
-        this.add.image(956, 180, 'paredmarronright').setScale(1.7); 
-        this.add.image(68, 20, 'paredmarronleft').setScale(1.7); 
-        this.add.image(956, 20, 'paredmarronright').setScale(1.7); 
-        this.add.image(88, -140, 'paredazulleft').setScale(1.7); 
-        this.add.image(936, -140, 'paredazulright').setScale(1.7);
-        this.add.image(88, -300, 'paredazulleft').setScale(1.7); 
-        this.add.image(936, -300, 'paredazulright').setScale(1.7); 
-        this.add.image(88, -460, 'paredazulleft').setScale(1.7); 
-        this.add.image(936, -460, 'paredazulright').setScale(1.7);
-        this.add.image(42, -648, 'bloquehielo').setScale(1.7);
-        this.add.image(983, -648, 'bloquehielo').setScale(1.7);
-        this.add.image(42, -648, 'bloquehielo').setScale(1.7);
-        this.add.image(75, -839, 'bloquehielo').setScale(1.7);
-        this.add.image(948, -839, 'bloquehielo').setScale(1.7);
-        this.add.image(103, -1030, 'bloquehielo').setScale(1.7);
-        this.add.image(921, -1030, 'bloquehielo').setScale(1.7);
-        this.add.image(131, -1221, 'bloquehielo').setScale(1.7);
-        this.add.image(893, -1221, 'bloquehielo').setScale(1.7);
-        this.add.image(171, -1412, 'bloquehielo').setScale(1.7);
-        this.add.image(853, -1412, 'bloquehielo').setScale(1.7);
-        this.add.image(204, -1603, 'bloquehielo').setScale(1.7);
-        this.add.image(820, -1603, 'bloquehielo').setScale(1.7);
-        this.add.image(234, -1740, 'bloquehielo2').setScale(1.7);
-        this.add.image(790, -1740, 'bloquehielo2').setScale(1.7);
+        const map = this.make.tilemap({ key: 'map' });
+        const bloques    = map.addTilesetImage("bloques",    "bloques");
+        const hielo      = map.addTilesetImage("hielo",      "hielo");
+        const paredverde = map.addTilesetImage("paredverde", "paredverde");
+        const paredverdes= map.addTilesetImage("paredverdes","paredverdes");
+        const paredmarron= map.addTilesetImage("paredmarron","paredmarron");
+        const paredazul  = map.addTilesetImage("paredazul",  "paredazul");
+        const numeros    = map.addTilesetImage("numeros",    "numeros");
+        const numeros2   = map.addTilesetImage("numeros2",   "numeros2");
+        const copos      = map.addTilesetImage("copos",      "copos");
+        const copos2     = map.addTilesetImage("copos2",     "copos2");
 
 
-        const crearNube = (y) => {
-            // Crear la nube con físicas pero sin gravedad
-            const nube = this.physics.add.image(-100, y, 'nubelarga').setScale(1.7);
-            nube.setImmovable(true);
-            nube.body.allowGravity = false;
-        
-            // Moverla con tween y hacer que reinicie el movimiento
-            const moverNube = () => {
-                nube.x = -100;
-                this.tweens.add({
-                    targets: nube,
-                    x: 1150,
-                    duration: 6000,
-                    ease: 'Linear',
-                    onComplete: moverNube
-                });
-            };
-        
-            moverNube();
-        
-            // Agregar colisión con el jugador
-            this.physics.add.collider(this.player, nube);
-        };
-        
-        // Agregar el número en el centro de la montaña
-        this.numeroNivel = this.add.image(42, 674, '1').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(983, 674, '1').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(42, 514, '2').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(983, 514, '2').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(68, 354, '3').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(956, 354, '3').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(68, 194, '4').setScale(1.5).setOrigin(0.5, 0.5);        
-        this.numeroNivel = this.add.image(956, 194, '4').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(68, 34, '5').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(956, 34, '5').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(95, -126, '6').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(930, -126, '6').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(95, -286, '7').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(930, -286, '7').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(95, -446, '8').setScale(1.5).setOrigin(0.5, 0.5);
-        this.numeroNivel = this.add.image(930, -446, '8').setScale(1.5).setOrigin(0.5, 0.5);
 
-        this.player = this.physics.add.sprite(512, 680, 'player').setScale(2);
+        const hielos = map.createLayer("Hielo", hielo, 256, -1300);
+        hielos.setCollisionByProperty({ colision: true });
 
-        crearNube(-843); 
-        crearNube(-1280); 
+        this.plataformas = map.createLayer("Bloque", bloques, 256, -1300);
+        this.plataformas.setCollisionByProperty({ colision: true });
 
-        this.physics.add.collider(this.player, this.suelo);
+        this.player = this.physics.add.sprite(512, 730, 'player').setScale(0.9);
         this.physics.add.collider(this.player, this.plataformas);
+        this.physics.add.collider(this.player, hielos);
 
-        this.cameras.main.setBounds(0, -10000, 800, 10780); 
+        Nubes(this, -175);
+        Nubes(this, -430);
 
-        this.cameras.main.startFollow(this.player, true, 0.05, 0.05, 0, -100);
+        this.anims.create({
+            key: 'pajaro',
+            frames: this.anims.generateFrameNumbers('pajarobonus', { start: 0, end: 3 }),
+            frameRate: 5,
+            repeat: -1
+        });
+
+        PajaroBonus(this, -880); 
+
+        this.bloques = [];
+
+        const hileras = [
+            { x: 328, y: 660, cantidad: 24, tipo: 'bloqueverde' },
+            { x: 328, y: 676, cantidad: 5, tipo: 'bloqueverde' },
+            { x: 456, y: 676, cantidad: 2, tipo: 'bloqueverde' },
+            { x: 552, y: 676, cantidad: 3, tipo: 'bloqueverde' },
+            { x: 648, y: 676, cantidad: 3, tipo: 'bloqueverde' },
+            { x: 440, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 408, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 488, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 536, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 600, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 632, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 696, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+
+            { x: 344, y: 372, cantidad: 22, tipo: 'bloquemarron' },
+            { x: 344, y: 388, cantidad: 1, tipo: 'bloquemarron' },
+            { x: 424, y: 388, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 520, y: 388, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 648, y: 388, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 360, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 408, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 472, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 504, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 568, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 632, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+
+            { x: 344, y: 468, cantidad: 22, tipo: 'bloquemarron' },
+            { x: 360, y: 484, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 456, y: 484, cantidad: 2, tipo: 'bloquemarron' },
+            { x: 552, y: 484, cantidad: 5, tipo: 'bloquemarron' },
+            { x: 344, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+            { x: 408, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+            { x: 440, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+            { x: 488, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+            { x: 536, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+            { x: 632, y: 480, cantidad: 1, tipo: 'bloquemarronchico'},
+
+            { x: 344, y: 564, cantidad: 22, tipo: 'bloquemarron' },  
+            { x: 392, y: 580, cantidad: 6, tipo: 'bloquemarron' },
+            { x: 552, y: 580, cantidad: 7, tipo: 'bloquemarron' },
+            { x: 376, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 536, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 664, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 488, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+
+            { x: 360, y: 276, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 424, y: 292, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 488, y: 292, cantidad: 8, tipo: 'bloqueazul' },
+            { x: 664, y: 292, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 360, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 408, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 440, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 472, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 616, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 648, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+
+            { x: 360, y: 180, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 424, y: 196, cantidad: 4, tipo: 'bloqueazul' },
+            { x: 536, y: 196, cantidad: 2, tipo: 'bloqueazul' },
+            { x: 616, y: 196, cantidad: 4, tipo: 'bloqueazul' },
+            { x: 360, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 408, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 488, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 520, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 568, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 600, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+
+            { x: 360, y: 84, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 424, y: 100, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 488, y: 100, cantidad: 8, tipo: 'bloqueazul' },
+            { x: 664, y: 100, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 360, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 408, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 440, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 472, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 616, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 648, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+        ];
+
+        hileras.forEach(({ x, y, cantidad, tipo, espaciado }) => {
+            const hilera = espaciado !== undefined
+                ? HileraBloques(this, x, y, cantidad, tipo, espaciado)
+                : HileraBloques(this, x, y, cantidad, tipo);
+        
+            hilera.forEach(bloque => {
+                bloque.body.setAllowGravity(false);
+                bloque.setData('tipo', tipo);
+                this.physics.add.collider(this.player, bloque);
+                this.bloques.push(bloque);
+            });
+        });
+
+        this.hileras = hileras;
+
+        this.anims.create({
+            key: 'yeti-walk',
+            frames: this.anims.generateFrameNumbers('yeti', { start: 0, end: 3 }),
+            frameRate: 6,
+            repeat: -1
+          });
+
+          const spawnPoints = [
+            { x: 750, y: 620 },
+            { x: 250, y: 332 },
+            { x: 750, y: 328 },
+            { x: 250, y: 524 },
+            { x: 750, y: 236 },
+            { x: 750, y: 140 },
+            { x: 250, y: 44 },
+          ];
+          
+        this.yetiManager = new Yeti(this, spawnPoints, 1024, 224, 800);
+        this.yetiManager.spawnYetis();
+        
+        map.createLayer("ParedVerde",  paredverde, 256, -1300);
+        map.createLayer("ParedVerdes", paredverdes,256, -1300);
+        map.createLayer("ParedMarron", paredmarron,256, -1300);
+        map.createLayer("ParedAzul",   paredazul,  256, -1300);
+        map.createLayer("Numeros",     numeros,    256, -1300);
+        map.createLayer("Numeros2",    numeros2,   256, -1300);
+        map.createLayer("Copo",        copos,      256, -1300);
+        map.createLayer("Copo2",       copos2,     256, -1300);
+        
+        this.cameras.main.setZoom(2);
+        this.cameras.main.setBounds(0, -10000, 800, 10780);
 
         this.keys = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W, 
+            up: Phaser.Input.Keyboard.KeyCodes.W,
             left: Phaser.Input.Keyboard.KeyCodes.A,
             down: Phaser.Input.Keyboard.KeyCodes.S,
             right: Phaser.Input.Keyboard.KeyCodes.D,
-            attack: Phaser.Input.Keyboard.KeyCodes.SPACE 
-        });
-
-        this.input.once('pointerdown', () => {
-            this.scene.start('GameOver');
+            attack: Phaser.Input.Keyboard.KeyCodes.F,
+            attack2: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
 
         this.anims.create({
             key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 4 }),
+            frameRate: 10
         });
-
         this.anims.create({
             key: 'idle',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
+            frames: [ { key: 'player', frame: 0 } ],
+            frameRate: 1
         });
-
         this.anims.create({
             key: 'jump',
-            frames: this.anims.generateFrameNumbers('player', { start: 3, end: 6 }),
-            frameRate: 10,
-            repeat: 1
+            frames: this.anims.generateFrameNumbers('player', { start: 5, end: 11 }),
+            frameRate: 10
         });
-
-        const ataque =this.anims.create({
+        this.anims.create({
             key: 'attack',
-            frames: this.anims.generateFrameNumbers('ataque', { start: 0, end: 5 }),
-            frameRate: 10,
-            repeat: -1
+            frames: this.anims.generateFrameNumbers('player', { start: 12, end: 17 }),
+            frameRate: 10
         });
-
-        this.anims.create(ataque);
-
         this.anims.create({
-            key: 'bloqueverde',
-            frames: this.anims.generateFrameNumbers('bloqueverdeanim', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: 1
+            key: 'attack2',
+            frames: this.anims.generateFrameNumbers('player', { start: 18, end: 23 }),
+            frameRate: 25
         });
-        
-        this.anims.create({
-            key: 'bloquemarron',
-            frames: this.anims.generateFrameNumbers('bloquemarronanim', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: 1
+
+        ['bloqueverde','bloqueazul','bloquemarron'].forEach(color => {
+            this.anims.create({
+              key: `${color}-break`,            
+              frames: this.anims.generateFrameNumbers(`${color}anim`, { start: 0, end: 5 }),
+              frameRate: 10,
+              hideOnComplete: true
+            });
         });
-        
-        this.anims.create({
-            key: 'bloqueazul',
-            frames: this.anims.generateFrameNumbers('bloqueazulanim', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: 1
+
+        ['bloqueverdechico','bloquemarronchico', 'bloqueazulchico'].forEach(color => {
+            this.anims.create({
+              key: `${color}-break`,            
+              frames: this.anims.generateFrameNumbers(`${color}anim`, { start: 0, end: 5 }),
+              frameRate: 10,
+              hideOnComplete: true
+            });
         });
-    }
 
-    update() {
-        // Movimiento del jugador con A y D
-        if (this.keys.left.isDown) {
-            this.player.setVelocityX(-200);
-            this.player.anims.play('walk', true);
-            this.player.setFlipX(true);
-        } else if (this.keys.right.isDown) {
-            this.player.setVelocityX(200);
-            this.player.anims.play('walk', true);
-            this.player.setFlipX(false);
-        } else {
-            this.player.setVelocityX(0);
-            this.player.anims.play('idle');
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(this.keys.up) && this.player.body.onFloor()) {
-            this.player.setVelocityY(-300);
-            this.player.anims.play('jump');
-        }
-
-        this.input.keyboard.on('keydown-SPACE', () => {
-            let playerX = this.player.x;
-            let playerY = this.player.y - 30; 
-
-            this.player.anims.play('attack');
-        
-            let bloques = this.plataformas.getChildren();
-        
-            for (let i = 0; i < bloques.length; i++) {
-                let bloque = bloques[i];
-        
-                if (!bloque) continue;
-        
-                if (Phaser.Math.Distance.Between(playerX, playerY, bloque.x, bloque.y) < 30) {
-                    bloque.vida--;
-        
-                    if (bloque.vida <= 0) {
-                        let animKey = 'bloqueverde'; 
-                        if (bloque.texture.key.includes('marron')) {
-                            animKey = 'bloquemarron';
-                        } else if (bloque.texture.key.includes('azul')) {
-                            animKey = 'bloqueazul';
-                        }
-                    
-                        const itemAnimado = this.add.sprite(bloque.x, bloque.y, animKey).setScale(1.5).setDepth(100).play(animKey);
-
-                        let randomX = Phaser.Math.Between(-70, 70);
-                    
-                        this.tweens.add({
-                            targets: itemAnimado,
-                            props: {
-                                x: { value: `+=${randomX}`, ease: 'Power1', duration: 300 },
-                                y: { value: '-=80', ease: 'Power1', duration: 300 }
-                            },
-                            onComplete: () => {
-                                this.tweens.add({
-                                    targets: itemAnimado,
-                                    props: {
-                                        x: { value: `+=${randomX}`, ease: 'Power1', duration: 400 },
-                                        y: { value: '+=120', ease: 'Power1', duration: 400 }
-                                    },
-                                    onComplete: () => {
-                                        itemAnimado.destroy();
-                                    }
-                                });
-                            }
-                        });
-                        bloque.destroy(); 
-                    }                    
-                    break;
-                }
+        this.isAttacking = false;
+        this.player.on('animationcomplete', anim => {
+            if (anim.key === 'attack' || anim.key === 'attack2') {
+                this.isAttacking = false;
             }
         });
+
+        this.keys.attack.on('down', () => {
+            if (!this.isAttacking) {
+                this.isAttacking = true;
+                this.player.setVelocityX(0);
+                this.player.anims.play('attack', true);
+            }
+        });
+
+        this.keys.attack2.on('down', () => {
+            const onFloor = this.player.body.onFloor();
+            if (!onFloor && !this.isAttacking) {
+                this.isAttacking = true;
+                this.player.setVelocityX(0);
+                this.player.anims.play('attack2', true);
+        
+                let bloqueCercano = null;
+                let menorDistancia = Infinity;
+        
+                this.bloques.forEach(bloque => {
+                    const distancia = Phaser.Math.Distance.Between(this.player.x, this.player.y, bloque.x, bloque.y);
+                    const cerca = distancia < 40;
+        
+                    const direccionCorrecta = this.player.flipX
+                        ? bloque.x < this.player.x
+                        : bloque.x > this.player.x;
+        
+                    if (cerca && direccionCorrecta && bloque.getData('rompible') && distancia < menorDistancia) {
+                        menorDistancia = distancia;
+                        bloqueCercano = bloque;
+                    }
+                });
+        
+                if (bloqueCercano) {
+                    const tipo = bloqueCercano.getData('tipo');      
+                    const x = bloqueCercano.x;
+                    const y = bloqueCercano.y;
+                
+                    bloqueCercano.destroy();
+                
+                    const fx = this.add.sprite(x, y, `${tipo}anim`);
+                    fx.play(`${tipo}-break`);
+                    fx.once('animationcomplete', () => fx.destroy());
+                  }
+            }
+        });
+        
+        this.isJumping = false;
+        this.jumpKeyDown = false;
+
+        this.maxReachedY = this.player.y - this.cameras.main.height / 2;
+
+        this.bonusText = this.add.text(0, 0, '', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.bonusText.setVisible(false);
+
+        this.bonusText.setDepth(1000);
+    }
+
+    activateBonus() {
+        this.bonusActive = true;
+        this.bonusStartTime = this.time.now;
+        this.bonusText.setVisible(true);
+    
+        this.bonusTimer = this.time.delayedCall(this.bonusTimeLeft, () => {
+            this.endBonus(false);
+        });
+    
+        console.log("BONUS ACTIVADO");
+    }
+    
+    
+    endBonus(success) {
+        this.bonusActive = false;
+        this.bonusText.setVisible(false);
+    
+        if (this.bonusTimer) {
+            this.bonusTimer.remove();
+        }
+    
+        if (success) {
+            console.log("¡Bonus completado!");
+        } else {
+            console.log("¡Game Over por no completar el bonus!");
+            this.scene.start('GameOver');
+        }
+    }
+    
+    
+    update() {
+        this.yetiManager.update();
+
+        if (this.isAttacking) {
+            const targetY = this.player.y - this.cameras.main.height / 2;
+            this.cameras.main.scrollY += (targetY - this.cameras.main.scrollY) * 0.1;
+            return;
+        }
+
+        let targetY = this.player.y - this.cameras.main.height / 2;
+        if (targetY < this.maxReachedY) {
+            this.maxReachedY = targetY;
+        }
+        this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
+
+        if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+        }
+
+        const onFloor = this.player.body.onFloor();
+
+        if (this.keys.up.isDown && onFloor && !this.jumpKeyDown) {
+            this.jumpKeyDown = true;
+            this.isJumping = true;
+            this.player.setVelocityY(-200);
+            this.player.anims.play('jump', true);
+        }
+        if (this.keys.up.isUp) {
+            this.jumpKeyDown = false;
+        }
+
+        if (this.isJumping && onFloor && this.player.body.velocity.y === 0) {
+            this.isJumping = false;
+            this.player.anims.stop();
+            this.player.setFrame(0);
+        }
+
+        if (this.keys.left.isDown) {
+            this.player.setVelocityX(-100);
+            this.player.setFlipX(true);
+            if (!this.isJumping) {
+                this.player.anims.play('walk', true);
+            }
+        } else if (this.keys.right.isDown) {
+            this.player.setVelocityX(100);
+            this.player.setFlipX(false);
+            if (!this.isJumping) {
+                this.player.anims.play('walk', true);
+            }
+        } else {
+            this.player.setVelocityX(0);
+            if (!this.isJumping) {
+                this.player.anims.stop();
+                this.player.setFrame(0);
+            }
+        }
+
+        if (!this.bonusActive && !this.bonusWasActivated && this.player.y <= 0) {
+            this.bonusWasActivated = true;
+            this.activateBonus();
+        }
+
+        if (this.bonusActive && this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.endBonus();
+        }
+
+        if (this.bonusActive) {
+            const elapsed = this.time.now - this.bonusStartTime;
+            const remaining = Math.max(0, this.bonusTimeLeft - elapsed);
+            const seconds = (remaining / 1000).toFixed(1);
+        
+            this.bonusText.setText(`${seconds}`);
+            this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
+        }
     }
 }

@@ -33,7 +33,8 @@ export class Yeti {
         .setData({ direction: dir, speed, rowY: y, rowTipo: tipo, wasOnFloor: true });
 
       // animación
-      yeti.anims.play('yeti-walk', true);
+      yeti.anims.play('yeti-walk', true)
+      .setScale(0.8);
 
       // gravedad para que caiga sobre la plataforma
       yeti.body.setGravityY(300);

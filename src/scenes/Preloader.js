@@ -57,6 +57,8 @@ export class Preloader extends Scene
         this.load.image('bloquemarronchico', 'BloqueMarronChico.png')
         this.load.image('bloqueazulchico', 'BloqueAzulChico.png')
 
+        this.load.image('berenjena', 'Berenjena.png');
+
         this.load.tilemapTiledJSON('map', 'Nivel1.json');
 
         this.load.image('logo', 'logo.png');
@@ -66,8 +68,8 @@ export class Preloader extends Scene
 
 
         this.load.spritesheet('player', 'Player.png', {
-            frameWidth: 32,
-            frameHeight: 40
+            frameWidth: 43,
+            frameHeight: 53
         });
         
         this.load.spritesheet('bloqueverdechicoanim', 'BloqueVerdeChicoAnim.png', {
@@ -103,6 +105,11 @@ export class Preloader extends Scene
         this.load.spritesheet('yeti', 'yeti.png', {
             frameWidth: 32,
             frameHeight: 30
+        });
+
+        this.load.spritesheet('pajaroenemigo', 'Pajaro2.png', {
+            frameWidth: 32,
+            frameHeight: 32
         });
 
         this.load.spritesheet('pajarobonus', 'PajaroBonus.png', {

@@ -1,26 +1,30 @@
-import { Scene } from 'phaser';
-
-export class GameOver extends Scene
-{
-    constructor ()
-    {
-        super('GameOver');
+export class GameOver extends Phaser.Scene {
+    constructor() {
+      super('GameOver');
     }
-
-    create ()
-    {
-        this.cameras.main.setBackgroundColor("000000");
-
-        this.add.text(512, 384, 'Game Over', {
-            fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
-
-        this.input.once('pointerdown', () => {
-
-            this.scene.start('MainMenu');
-
-        });
+  
+    init(data) {
+      this.finalScore = data.score || 0;
     }
-}
+  
+    create() {
+      const centerX = this.cameras.main.centerX;
+      const centerY = this.cameras.main.centerY;
+  
+
+      this.add.text(centerX, centerY, `Tu puntaje fue: ${this.finalScore}`, {
+        fontSize: '32px',
+        fill: '#ffffff'
+      }).setOrigin(0.5);
+  
+      this.add.text(centerX, centerY + 100, 'Presioná ESPACIO para reiniciar', {
+        fontSize: '20px',
+        fill: '#cccccc'
+      }).setOrigin(0.5);
+  
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.start('Game');
+      });
+    }
+  }
+  

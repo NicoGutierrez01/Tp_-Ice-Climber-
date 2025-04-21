@@ -3,10 +3,14 @@ import { PajaroBonus } from '../objetos/PajarosBonus';
 import { Nubes } from '../objetos/Nubes';
 import { HileraBloques } from '../objetos/HileraBloques';
 import { Yeti } from '../objetos/Yeti';
+import { PajaroEnemigo } from '../objetos/PajaroEnemigo';
+import { Berenjena } from '../objetos/Berenjena';
 
 export class Game extends Scene {
     constructor() {
         super('Game');
+        this.maxLives = 3;
+        this.score = 0;
     }
 
     create() {
@@ -14,6 +18,11 @@ export class Game extends Scene {
         const screenW = this.scale.width;
 
         this.scenePaused = false;
+
+        this.lives = this.maxLives;
+        this.livesText = this.add.text(16, 16, `Vidas: ${this.lives}`, {
+            fontSize: '20px', fill: '#ffffff', stroke: '#000000', strokeThickness: 4
+        }).setScrollFactor(0);
 
         this.bonusActive = false;
         this.bonusTimeLeft = 40000;
@@ -32,8 +41,6 @@ export class Game extends Scene {
         const copos      = map.addTilesetImage("copos",      "copos");
         const copos2     = map.addTilesetImage("copos2",     "copos2");
 
-
-
         const hielos = map.createLayer("Hielo", hielo, 256, -1300);
         hielos.setCollisionByProperty({ colision: true });
 
@@ -49,7 +56,7 @@ export class Game extends Scene {
 
         this.anims.create({
             key: 'pajaro',
-            frames: this.anims.generateFrameNumbers('pajarobonus', { start: 0, end: 3 }),
+            frames: this.anims.generateFrameNumbers('pajarobonus', { start: 1, end: 4 }),
             frameRate: 5,
             repeat: -1
         });
@@ -171,6 +178,9 @@ export class Game extends Scene {
           
         this.yetiManager = new Yeti(this, spawnPoints, 1024, 224, 800);
         this.yetiManager.spawnYetis();
+        this.yetiManager.yetis.getChildren().forEach(yeti => {
+            this.physics.add.overlap(this.player, yeti, this.hitEnemy, null, this);
+        });
         
         map.createLayer("ParedVerde",  paredverde, 256, -1300);
         map.createLayer("ParedVerdes", paredverdes,256, -1300);
@@ -181,7 +191,7 @@ export class Game extends Scene {
         map.createLayer("Copo",        copos,      256, -1300);
         map.createLayer("Copo2",       copos2,     256, -1300);
         
-        this.cameras.main.setZoom(2);
+
         this.cameras.main.setBounds(0, -10000, 800, 10780);
 
         this.keys = this.input.keyboard.addKeys({
@@ -195,8 +205,8 @@ export class Game extends Scene {
 
         this.anims.create({
             key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 4 }),
-            frameRate: 10
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 5}),
+            frameRate: 15
         });
         this.anims.create({
             key: 'idle',
@@ -205,20 +215,35 @@ export class Game extends Scene {
         });
         this.anims.create({
             key: 'jump',
-            frames: this.anims.generateFrameNumbers('player', { start: 5, end: 11 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 10, end: 12 }),
             frameRate: 10
         });
         this.anims.create({
             key: 'attack',
-            frames: this.anims.generateFrameNumbers('player', { start: 12, end: 17 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 7, end: 9 }),
             frameRate: 10
         });
         this.anims.create({
             key: 'attack2',
-            frames: this.anims.generateFrameNumbers('player', { start: 18, end: 23 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 11, end: 12 }),
             frameRate: 25
         });
 
+        this.anims.create({
+            key: 'enemy-bird-fly',
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 1, end: 4 }),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        this.time.addEvent({
+            delay: 8000,           
+            callback: () => {
+                const bird = PajaroEnemigo(this, 100, 300, 80, 1);
+                this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+            }
+          });
+          
         ['bloqueverde','bloqueazul','bloquemarron'].forEach(color => {
             this.anims.create({
               key: `${color}-break`,            
@@ -286,6 +311,8 @@ export class Game extends Scene {
                     const fx = this.add.sprite(x, y, `${tipo}anim`);
                     fx.play(`${tipo}-break`);
                     fx.once('animationcomplete', () => fx.destroy());
+
+                    this.score += 10;
                   }
             }
         });
@@ -304,12 +331,54 @@ export class Game extends Scene {
         this.bonusText.setVisible(false);
 
         this.bonusText.setDepth(1000);
+
+        this.berenjenas = new Berenjena(this, this.bloques, this.player);
+
+        this.physics.add.overlap(
+            this.player,
+            this.berenjenas.group,
+            this.collectBerenjena,
+            null,
+            this
+          );
+
+          this.time.addEvent({
+            delay: 8000,
+            callback: () => {
+              const bird = PajaroEnemigo(this, 100, 300, 80, 1);
+              this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+            },
+            loop: true
+          });
+
+    }
+
+    collectBerenjena(player, berenjena) {
+        berenjena.destroy();
+        this.score += 400;
+    }
+
+    hitEnemy(player, enemySprite) {
+        enemySprite.disableBody(true, true);
+        this.lives -= 1;
+        this.livesText.setText(`Vidas: ${this.lives}`);
+
+        if (this.lives <= 0) {
+            this.scene.start('GameOver', { score: this.score });
+        }
     }
 
     activateBonus() {
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
         this.bonusText.setVisible(true);
+
+        const coords = [
+            { x: 370, y: -100 },
+            { x: 590, y: -276 },
+            { x: 460, y: -372 }
+          ];
+        this.berenjenas.spawnAtPositions(coords);
     
         this.bonusTimer = this.time.delayedCall(this.bonusTimeLeft, () => {
             this.endBonus(false);
@@ -331,7 +400,7 @@ export class Game extends Scene {
             console.log("¡Bonus completado!");
         } else {
             console.log("¡Game Over por no completar el bonus!");
-            this.scene.start('GameOver');
+            this.scene.start('GameOver', { score: this.score });
         }
     }
     
@@ -410,4 +479,4 @@ export class Game extends Scene {
             this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
         }
     }
-}
+}  

@@ -190,8 +190,8 @@ export class Game extends Scene {
         map.createLayer("Numeros2",    numeros2,   256, -1300);
         map.createLayer("Copo",        copos,      256, -1300);
         map.createLayer("Copo2",       copos2,     256, -1300);
-        
 
+        this.cameras.main.setZoom(2);
         this.cameras.main.setBounds(0, -10000, 800, 10780);
 
         this.keys = this.input.keyboard.addKeys({

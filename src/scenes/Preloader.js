@@ -33,6 +33,8 @@ export class Preloader extends Scene
         this.load.setPath('assets');
         this.load.image('bloques', 'bloques.png');
 
+        this.load.image('vidas', 'Vidas.png');
+
         this.load.image('hielo', 'hielo.png');
 
         this.load.image('copos', 'copos.png');

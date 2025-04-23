@@ -5,6 +5,7 @@ import { HileraBloques } from '../objetos/HileraBloques';
 import { Yeti } from '../objetos/Yeti';
 import { PajaroEnemigo } from '../objetos/PajaroEnemigo';
 import { Berenjena } from '../objetos/Berenjena';
+import { InputManager } from '../components/InputManager';
 
 export class Game extends Scene {
     constructor() {
@@ -14,15 +15,19 @@ export class Game extends Scene {
     }
 
     create() {
+        this.anims.remove('yeti-walk');
+        this.anims.remove('pajaro');
+        this.anims.remove('enemy-bird-fly');
+        this.anims.remove('walk');
+        this.anims.remove('idle');
+        this.anims.remove('jump');
+        this.anims.remove('attack');
+        this.anims.remove('attack2');
+
         this.cameras.main.setBackgroundColor("000000");
         const screenW = this.scale.width;
 
         this.scenePaused = false;
-
-        this.lives = this.maxLives;
-        this.livesText = this.add.text(16, 16, `Vidas: ${this.lives}`, {
-            fontSize: '20px', fill: '#ffffff', stroke: '#000000', strokeThickness: 4
-        }).setScrollFactor(0);
 
         this.bonusActive = false;
         this.bonusTimeLeft = 40000;
@@ -194,6 +199,18 @@ export class Game extends Scene {
         this.cameras.main.setZoom(2);
         this.cameras.main.setBounds(0, -10000, 800, 10780);
 
+        this.lives = this.maxLives;
+        this.lifeIcons = [];
+        const startX = this.cameras.main.scrollX + 340;  
+        const startY = this.cameras.main.scrollY + 220;
+
+        for (let i = 0; i < this.maxLives; i++) {
+            const icon = this.add.image(startX + i * 15, startY, 'vidas')
+                .setScrollFactor(0)
+                .setScale(0.7);  
+            this.lifeIcons.push(icon);
+        }
+
         this.keys = this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
             left: Phaser.Input.Keyboard.KeyCodes.A,
@@ -202,6 +219,9 @@ export class Game extends Scene {
             attack: Phaser.Input.Keyboard.KeyCodes.F,
             attack2: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
+
+        this.inputManager = new InputManager(this);
+        this.inputManager.setup();
 
         this.anims.create({
             key: 'walk',
@@ -360,15 +380,20 @@ export class Game extends Scene {
 
     hitEnemy(player, enemySprite) {
         enemySprite.disableBody(true, true);
+    
         this.lives -= 1;
-        this.livesText.setText(`Vidas: ${this.lives}`);
-
+    
+        const icono = this.lifeIcons.pop();
+        if (icono) {
+            icono.destroy();
+        }
         if (this.lives <= 0) {
             this.scene.start('GameOver', { score: this.score });
         }
     }
-
+    
     activateBonus() {
+        this.lifeIcons.forEach(icono => icono.setVisible(false));
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
         this.bonusText.setVisible(true);
@@ -387,7 +412,6 @@ export class Game extends Scene {
         console.log("BONUS ACTIVADO");
     }
     
-    
     endBonus(success) {
         this.bonusActive = false;
         this.bonusText.setVisible(false);
@@ -403,14 +427,51 @@ export class Game extends Scene {
             this.scene.start('GameOver', { score: this.score });
         }
     }
+
+    performAirAttack() {
+        let bloqueCercano = null;
+        let menorDistancia = Infinity;
     
+        this.bloques.forEach(bloque => {
+            // sólo bloques arriba del jugador
+            if (bloque.y >= this.player.y) {
+                return;
+            }
+    
+            const d = Phaser.Math.Distance.Between(
+                this.player.x, this.player.y,
+                bloque.x, bloque.y
+            );
+            const cerca = d < 40;
+            const direccionOK = this.player.flipX
+                ? bloque.x < this.player.x
+                : bloque.x > this.player.x;
+    
+            if (cerca && direccionOK && bloque.getData('rompible') && d < menorDistancia) {
+                menorDistancia = d;
+                bloqueCercano = bloque;
+            }
+        });
+    
+        if (bloqueCercano) {
+            const tipo = bloqueCercano.getData('tipo');
+            const x = bloqueCercano.x, y = bloqueCercano.y;
+            bloqueCercano.destroy();
+    
+            const fx = this.add.sprite(x, y, `${tipo}anim`);
+            fx.play(`${tipo}-break`);
+            fx.once('animationcomplete', () => fx.destroy());
+    
+            this.score += 10;
+        }
+    }    
     
     update() {
+        this.inputManager.update();
         this.yetiManager.update();
 
         if (this.isAttacking) {
             const targetY = this.player.y - this.cameras.main.height / 2;
-            this.cameras.main.scrollY += (targetY - this.cameras.main.scrollY) * 0.1;
             return;
         }
 
@@ -425,40 +486,52 @@ export class Game extends Scene {
 
         const onFloor = this.player.body.onFloor();
 
-        if (this.keys.up.isDown && onFloor && !this.jumpKeyDown) {
+        const { x: moveX, y: moveY } = this.inputManager.getMovement();
+    
+        const jumpPad    = this.inputManager.pad?.buttons?.[0]?.pressed;
+        const attackPad1 = this.inputManager.pad?.buttons?.[2]?.pressed;
+        const attackPad2 = this.inputManager.pad?.buttons?.[1]?.pressed;
+    
+        if (!this.jumpKeyDown && ((jumpPad && onFloor) || (this.keys.up.isDown && onFloor))) {
             this.jumpKeyDown = true;
-            this.isJumping = true;
+            this.isJumping  = true;
             this.player.setVelocityY(-200);
             this.player.anims.play('jump', true);
         }
-        if (this.keys.up.isUp) {
+        if (this.keys.up.isUp && !jumpPad) {
             this.jumpKeyDown = false;
         }
-
         if (this.isJumping && onFloor && this.player.body.velocity.y === 0) {
             this.isJumping = false;
-            this.player.anims.stop();
             this.player.setFrame(0);
         }
-
-        if (this.keys.left.isDown) {
-            this.player.setVelocityX(-100);
-            this.player.setFlipX(true);
-            if (!this.isJumping) {
-                this.player.anims.play('walk', true);
-            }
-        } else if (this.keys.right.isDown) {
-            this.player.setVelocityX(100);
-            this.player.setFlipX(false);
-            if (!this.isJumping) {
-                this.player.anims.play('walk', true);
-            }
+    
+        if (moveX !== 0) {
+            this.player.setVelocityX(moveX * 100);
+            this.player.setFlipX(moveX < 0);
+            if (!this.isJumping) this.player.anims.play('walk', true);
+        } else if (this.keys.left.isDown || this.keys.right.isDown) {
+            const dir = this.keys.left.isDown ? -1 : 1;
+            this.player.setVelocityX(dir * 100);
+            this.player.setFlipX(dir < 0);
+            if (!this.isJumping) this.player.anims.play('walk', true);
         } else {
             this.player.setVelocityX(0);
-            if (!this.isJumping) {
-                this.player.anims.stop();
-                this.player.setFrame(0);
-            }
+            if (!this.isJumping) this.player.setFrame(0);
+        }
+    
+        if (!this.isAttacking && (attackPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
+            this.isAttacking = true;
+            this.player.setVelocityX(0);
+            this.player.anims.play('attack', true);
+        }
+
+        else if (!this.isAttacking && (attackPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
+            this.isAttacking = true;
+            this.player.setVelocityX(0);
+            this.player.anims.play('attack2', true);
+
+            this.performAirAttack();
         }
 
         if (!this.bonusActive && !this.bonusWasActivated && this.player.y <= 0) {
@@ -479,4 +552,4 @@ export class Game extends Scene {
             this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
         }
     }
-}  
+}

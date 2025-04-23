@@ -24,6 +24,9 @@ const config = {
             debug: false
         }
     },
+    input: {
+        gamepad: true
+      },
     scene: [
         Boot,
         Preloader,

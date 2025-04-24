@@ -28,7 +28,7 @@ export class MainMenu extends Scene
 
         buttonplayer1.on('pointerdown', () => {
 
-            this.scene.start('Game');
+            this.scene.start('Nivel2');
 
         });
 

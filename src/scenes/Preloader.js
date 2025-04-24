@@ -43,6 +43,7 @@ export class Preloader extends Scene
         this.load.image('paredverde', 'paredverde.png');
         this.load.image('paredverdes', 'paredverdes.png');
         this.load.image('paredmarron', 'paredmarron.png');
+        this.load.image('marronbonus', 'marronbonus.png');
         this.load.image('paredazul', 'paredazul.png');
 
         this.load.image('numeros', 'numeros.png');
@@ -60,8 +61,10 @@ export class Preloader extends Scene
         this.load.image('bloqueazulchico', 'BloqueAzulChico.png')
 
         this.load.image('berenjena', 'Berenjena.png');
+        this.load.image('zanahoria', 'Zanahoria.png');
 
         this.load.tilemapTiledJSON('map', 'Nivel1.json');
+        this.load.tilemapTiledJSON('map2', 'Nivel2.json');
 
         this.load.image('logo', 'logo.png');
 

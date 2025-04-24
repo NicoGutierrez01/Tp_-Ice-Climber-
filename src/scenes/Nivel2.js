@@ -1,0 +1,542 @@
+import { Scene } from 'phaser';
+import { PajaroBonus } from '../objetos/PajarosBonus';
+import { Nubes } from '../objetos/Nubes';
+import { HileraBloques } from '../objetos/HileraBloques';
+import { Yeti } from '../objetos/Yeti';
+import { PajaroEnemigo } from '../objetos/PajaroEnemigo';
+import { Zanahoria } from '../objetos/Zanahoria';
+import { InputManager } from '../components/InputManager';
+
+export class Nivel2 extends Scene {
+    constructor() {
+        super('Nivel2');
+        this.maxLives = 3;
+        this.score = 0;
+    }
+
+    create() {
+        this.anims.remove('yeti-walk');
+        this.anims.remove('pajaro');
+        this.anims.remove('enemy-bird-fly');
+        this.anims.remove('walk');
+        this.anims.remove('idle');
+        this.anims.remove('jump');
+        this.anims.remove('attack');
+        this.anims.remove('attack2');
+
+        this.cameras.main.setBackgroundColor("000000");
+        const screenW = this.scale.width;
+
+        this.scenePaused = false;
+
+        this.bonusActive = false;
+        this.bonusTimeLeft = 40000;
+        this.bonusStartTime = 0;
+        this.bonusTimer = null;
+
+        const map = this.make.tilemap({ key: 'map2' });
+        const bloques    = map.addTilesetImage("bloques",    "bloques");
+        const hielo      = map.addTilesetImage("hielo",      "hielo");
+        const paredverde = map.addTilesetImage("paredverde", "paredverde");
+        const paredverdes= map.addTilesetImage("paredverdes","paredverdes");
+        const paredmarron= map.addTilesetImage("paredmarron","paredmarron");
+        const paredmarronbonus = map.addTilesetImage("marronbonus","marronbonus");
+        const paredazul  = map.addTilesetImage("paredazul",  "paredazul");
+        const numeros    = map.addTilesetImage("numeros",    "numeros");
+        const numeros2   = map.addTilesetImage("numeros2",   "numeros2");
+        const copos      = map.addTilesetImage("copos",      "copos");
+        const copos2     = map.addTilesetImage("copos2",     "copos2");
+
+        const hielos = map.createLayer("Hielo", hielo, 256, -1300);
+        hielos.setCollisionByProperty({ colision: true });
+
+        this.plataformas = map.createLayer("Bloque", bloques, 256, -1300);
+        this.plataformas.setCollisionByProperty({ colision: true });
+
+        this.player = this.physics.add.sprite(512, -600, 'player').setScale(0.9);
+        this.physics.add.collider(this.player, this.plataformas);
+        this.physics.add.collider(this.player, hielos);
+
+        Nubes(this, -159);
+        Nubes(this, -303);
+        Nubes(this, -431);
+        Nubes(this, -575);
+        Nubes(this, 468);
+
+        this.anims.create({
+            key: 'pajaro',
+            frames: this.anims.generateFrameNumbers('pajarobonus', { start: 1, end: 4 }),
+            frameRate: 5,
+            repeat: -1
+        });
+
+        PajaroBonus(this, -880); 
+
+        this.bloques = [];
+
+        const hileras = [
+            { x: 328, y: 660, cantidad: 6, tipo: 'bloqueverde' },
+            { x: 616, y: 660, cantidad: 6, tipo: 'bloqueverde' },
+            { x: 328, y: 676, cantidad: 3, tipo: 'bloqueverde' },
+            { x: 680, y: 676, cantidad: 1, tipo: 'bloqueverde' },
+            { x: 376, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 616, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 664, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+            { x: 696, y: 672, cantidad: 1, tipo: 'bloqueverdechico' },
+
+            { x: 376, y: 372, cantidad: 4, tipo: 'bloquemarron' },
+            { x: 376, y: 388, cantidad: 4, tipo: 'bloquemarron' }, 
+            { x: 504, y: 372, cantidad: 4, tipo: 'bloquemarron' },
+            { x: 536, y: 388, cantidad: 2, tipo: 'bloquemarron' },
+            { x: 648, y: 372, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 680, y: 388, cantidad: 4, tipo: 'bloquemarron' },
+            { x: 664, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 520, y: 384, cantidad: 1, tipo: 'bloquemarronchico' },
+
+            { x: 344, y: 564, cantidad: 22, tipo: 'bloquemarron' },  
+            { x: 392, y: 580, cantidad: 3, tipo: 'bloquemarron' },
+            { x: 488, y: 580, cantidad: 8, tipo: 'bloquemarron' },
+            { x: 680, y: 580, cantidad: 1, tipo: 'bloquemarron' },
+            { x: 376, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 440, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 472, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 616, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+            { x: 664, y: 576, cantidad: 1, tipo: 'bloquemarronchico' },
+
+            { x: 360, y: 276, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 360, y: 292, cantidad: 3, tipo: 'bloqueazul' },
+            { x: 520, y: 292, cantidad: 6, tipo: 'bloqueazul' },
+            { x: 456, y: 292, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 408, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 504, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 440, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 472, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 616, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 664, y: 288, cantidad: 1, tipo: 'bloqueazulchico' },
+
+            { x: 360, y: 180, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 360, y: 196, cantidad: 1, tipo: 'bloqueazul' },
+            { x: 456, y: 196, cantidad: 5, tipo: 'bloqueazul' },
+            { x: 584, y: 196, cantidad: 2, tipo: 'bloqueazul' },
+            { x: 376, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 440, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 536, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 568, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 616, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 664, y: 192, cantidad: 1, tipo: 'bloqueazulchico' },
+
+            { x: 360, y: 84, cantidad: 20, tipo: 'bloqueazul' },
+            { x: 520, y: 100, cantidad: 6, tipo: 'bloqueazul' },
+            { x: 392, y: 100, cantidad: 3, tipo: 'bloqueazul' },
+            { x: 376, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 440, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 504, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 616, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+            { x: 664, y: 96, cantidad: 1, tipo: 'bloqueazulchico' },
+        ];
+
+        hileras.forEach(({ x, y, cantidad, tipo, espaciado }) => {
+            const hilera = espaciado !== undefined
+                ? HileraBloques(this, x, y, cantidad, tipo, espaciado)
+                : HileraBloques(this, x, y, cantidad, tipo);
+        
+            hilera.forEach(bloque => {
+                bloque.body.setAllowGravity(false);
+                bloque.setData('tipo', tipo);
+                this.physics.add.collider(this.player, bloque);
+                this.bloques.push(bloque);
+            });
+        });
+
+        this.hileras = hileras;
+
+        this.anims.create({
+            key: 'yeti-walk',
+            frames: this.anims.generateFrameNumbers('yeti', { start: 0, end: 3 }),
+            frameRate: 6,
+            repeat: -1
+          });
+
+          const spawnPoints = [
+            { x: 750, y: 620 },
+            { x: 250, y: 332 },
+            { x: 750, y: 328 },
+            { x: 250, y: 524 },
+            { x: 750, y: 236 },
+            { x: 750, y: 140 },
+            { x: 250, y: 44 },
+          ];
+          
+        this.yetiManager = new Yeti(this, spawnPoints, 1024, 224, 800);
+        this.yetiManager.spawnYetis();
+        this.yetiManager.yetis.getChildren().forEach(yeti => {
+            this.physics.add.overlap(this.player, yeti, this.hitEnemy, null, this);
+        });
+        
+        map.createLayer("ParedVerde",  paredverde, 256, -1300);
+        map.createLayer("ParedVerdes", paredverdes,256, -1300);
+        map.createLayer("ParedMarron", paredmarron,256, -1300);
+        map.createLayer("ParedMarronBonus", paredmarronbonus,256, -1300);
+        map.createLayer("ParedAzul",   paredazul,  256, -1300);
+        map.createLayer("Numeros",     numeros,    256, -1300);
+        map.createLayer("Numeros2",    numeros2,   256, -1300);
+        map.createLayer("Copo",        copos,      256, -1300);
+        map.createLayer("Copo2",       copos2,     256, -1300);
+
+
+        this.cameras.main.setBounds(0, -10000, 800, 10780);
+
+        this.lives = this.maxLives;
+        this.lifeIcons = [];
+        const startX = this.cameras.main.scrollX + 340;  
+        const startY = this.cameras.main.scrollY + 220;
+
+        for (let i = 0; i < this.maxLives; i++) {
+            const icon = this.add.image(startX + i * 15, startY, 'vidas')
+                .setScrollFactor(0)
+                .setScale(0.7);  
+            this.lifeIcons.push(icon);
+        }
+
+        this.keys = this.input.keyboard.addKeys({
+            up: Phaser.Input.Keyboard.KeyCodes.W,
+            left: Phaser.Input.Keyboard.KeyCodes.A,
+            down: Phaser.Input.Keyboard.KeyCodes.S,
+            right: Phaser.Input.Keyboard.KeyCodes.D,
+            attack: Phaser.Input.Keyboard.KeyCodes.F,
+            attack2: Phaser.Input.Keyboard.KeyCodes.SPACE
+        });
+
+        this.inputManager = new InputManager(this);
+        this.inputManager.setup();
+
+        this.anims.create({
+            key: 'walk',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 5}),
+            frameRate: 15
+        });
+        this.anims.create({
+            key: 'idle',
+            frames: [ { key: 'player', frame: 0 } ],
+            frameRate: 1
+        });
+        this.anims.create({
+            key: 'jump',
+            frames: this.anims.generateFrameNumbers('player', { start: 10, end: 12 }),
+            frameRate: 10
+        });
+        this.anims.create({
+            key: 'attack',
+            frames: this.anims.generateFrameNumbers('player', { start: 7, end: 9 }),
+            frameRate: 10
+        });
+        this.anims.create({
+            key: 'attack2',
+            frames: this.anims.generateFrameNumbers('player', { start: 11, end: 12 }),
+            frameRate: 25
+        });
+
+        this.anims.create({
+            key: 'enemy-bird-fly',
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 1, end: 4 }),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        this.time.addEvent({
+            delay: 8000,           
+            callback: () => {
+                const bird = PajaroEnemigo(this, 100, 300, 80, 1);
+                this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+            }
+          });
+          
+        ['bloqueverde','bloqueazul','bloquemarron'].forEach(color => {
+            this.anims.create({
+              key: `${color}-break`,            
+              frames: this.anims.generateFrameNumbers(`${color}anim`, { start: 0, end: 5 }),
+              frameRate: 10,
+              hideOnComplete: true
+            });
+        });
+
+        ['bloqueverdechico','bloquemarronchico', 'bloqueazulchico'].forEach(color => {
+            this.anims.create({
+              key: `${color}-break`,            
+              frames: this.anims.generateFrameNumbers(`${color}anim`, { start: 0, end: 5 }),
+              frameRate: 10,
+              hideOnComplete: true
+            });
+        });
+
+        this.isAttacking = false;
+        this.player.on('animationcomplete', anim => {
+            if (anim.key === 'attack' || anim.key === 'attack2') {
+                this.isAttacking = false;
+            }
+        });
+
+        this.keys.attack.on('down', () => {
+            if (!this.isAttacking) {
+                this.isAttacking = true;
+                this.player.setVelocityX(0);
+                this.player.anims.play('attack', true);
+            }
+        });
+
+        this.keys.attack2.on('down', () => {
+            const onFloor = this.player.body.onFloor();
+            if (!onFloor && !this.isAttacking) {
+                this.isAttacking = true;
+                this.player.setVelocityX(0);
+                this.player.anims.play('attack2', true);
+        
+                let bloqueCercano = null;
+                let menorDistancia = Infinity;
+        
+                this.bloques.forEach(bloque => {
+                    const distancia = Phaser.Math.Distance.Between(this.player.x, this.player.y, bloque.x, bloque.y);
+                    const cerca = distancia < 40;
+        
+                    const direccionCorrecta = this.player.flipX
+                        ? bloque.x < this.player.x
+                        : bloque.x > this.player.x;
+        
+                    if (cerca && direccionCorrecta && bloque.getData('rompible') && distancia < menorDistancia) {
+                        menorDistancia = distancia;
+                        bloqueCercano = bloque;
+                    }
+                });
+        
+                if (bloqueCercano) {
+                    const tipo = bloqueCercano.getData('tipo');      
+                    const x = bloqueCercano.x;
+                    const y = bloqueCercano.y;
+                
+                    bloqueCercano.destroy();
+                
+                    const fx = this.add.sprite(x, y, `${tipo}anim`);
+                    fx.play(`${tipo}-break`);
+                    fx.once('animationcomplete', () => fx.destroy());
+
+                    this.score += 10;
+                  }
+            }
+        });
+        
+        this.isJumping = false;
+        this.jumpKeyDown = false;
+
+        this.maxReachedY = this.player.y - this.cameras.main.height / 2;
+
+        this.bonusText = this.add.text(0, 0, '', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.bonusText.setVisible(false);
+
+        this.bonusText.setDepth(1000);
+
+        this.zanahorias = new Zanahoria(this, this.bloques, this.player);
+
+        this.physics.add.overlap(
+            this.player,
+            this.zanahorias.group,
+            this.collectBerenjena,
+            null,
+            this
+          );
+
+          this.time.addEvent({
+            delay: 8000,
+            callback: () => {
+              const bird = PajaroEnemigo(this, 100, 300, 80, 1);
+              this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+            },
+            loop: true
+          });
+
+    }
+
+    collectBerenjena(player, zanahoria) {
+        zanahoria.destroy();
+        this.score += 400;
+    }
+
+    hitEnemy(player, enemySprite) {
+        enemySprite.disableBody(true, true);
+    
+        this.lives -= 1;
+    
+        const icono = this.lifeIcons.pop();
+        if (icono) {
+            icono.destroy();
+        }
+        if (this.lives <= 0) {
+            this.scene.start('GameOver', { score: this.score });
+        }
+    }
+    
+    activateBonus() {
+        this.lifeIcons.forEach(icono => icono.setVisible(false));
+        this.bonusActive = true;
+        this.bonusStartTime = this.time.now;
+        this.bonusText.setVisible(true);
+
+        const coords = [
+            { x: 368, y: -100 },
+            { x: 598, y: -277 },
+            { x: 466, y: -372 }
+          ];
+        this.zanahorias.spawnAtPositions(coords);
+    
+        this.bonusTimer = this.time.delayedCall(this.bonusTimeLeft, () => {
+            this.endBonus(false);
+        });
+    
+        console.log("BONUS ACTIVADO");
+    }
+    
+    endBonus(success) {
+        this.bonusActive = false;
+        this.bonusText.setVisible(false);
+    
+        if (this.bonusTimer) {
+            this.bonusTimer.remove();
+        }
+    
+        if (success) {
+            console.log("¡Bonus completado!");
+        } else {
+            console.log("¡Game Over por no completar el bonus!");
+            this.scene.start('GameOver', { score: this.score });
+        }
+    }
+
+    performAirAttack() {
+        let bloqueCercano = null;
+        let menorDistancia = Infinity;
+    
+        this.bloques.forEach(bloque => {
+            // sólo bloques arriba del jugador
+            if (bloque.y >= this.player.y) {
+                return;
+            }
+    
+            const d = Phaser.Math.Distance.Between(
+                this.player.x, this.player.y,
+                bloque.x, bloque.y
+            );
+            const cerca = d < 40;
+            const direccionOK = this.player.flipX
+                ? bloque.x < this.player.x
+                : bloque.x > this.player.x;
+    
+            if (cerca && direccionOK && bloque.getData('rompible') && d < menorDistancia) {
+                menorDistancia = d;
+                bloqueCercano = bloque;
+            }
+        });
+    
+        if (bloqueCercano) {
+            const tipo = bloqueCercano.getData('tipo');
+            const x = bloqueCercano.x, y = bloqueCercano.y;
+            bloqueCercano.destroy();
+    
+            const fx = this.add.sprite(x, y, `${tipo}anim`);
+            fx.play(`${tipo}-break`);
+            fx.once('animationcomplete', () => fx.destroy());
+    
+            this.score += 10;
+        }
+    }    
+    
+    update() {
+        this.inputManager.update();
+        this.yetiManager.update();
+
+        if (this.isAttacking) {
+            const targetY = this.player.y - this.cameras.main.height / 2;
+            return;
+        }
+
+        let targetY = this.player.y - this.cameras.main.height / 2;
+        if (targetY < this.maxReachedY) {
+            this.maxReachedY = targetY;
+        }
+        this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
+
+        if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+        }
+
+        const onFloor = this.player.body.onFloor();
+
+        const { x: moveX, y: moveY } = this.inputManager.getMovement();
+    
+        const jumpPad    = this.inputManager.pad?.buttons?.[0]?.pressed;
+        const attackPad1 = this.inputManager.pad?.buttons?.[2]?.pressed;
+        const attackPad2 = this.inputManager.pad?.buttons?.[1]?.pressed;
+    
+        if (!this.jumpKeyDown && ((jumpPad && onFloor) || (this.keys.up.isDown && onFloor))) {
+            this.jumpKeyDown = true;
+            this.isJumping  = true;
+            this.player.setVelocityY(-200);
+            this.player.anims.play('jump', true);
+        }
+        if (this.keys.up.isUp && !jumpPad) {
+            this.jumpKeyDown = false;
+        }
+        if (this.isJumping && onFloor && this.player.body.velocity.y === 0) {
+            this.isJumping = false;
+            this.player.setFrame(0);
+        }
+    
+        if (moveX !== 0) {
+            this.player.setVelocityX(moveX * 100);
+            this.player.setFlipX(moveX < 0);
+            if (!this.isJumping) this.player.anims.play('walk', true);
+        } else if (this.keys.left.isDown || this.keys.right.isDown) {
+            const dir = this.keys.left.isDown ? -1 : 1;
+            this.player.setVelocityX(dir * 100);
+            this.player.setFlipX(dir < 0);
+            if (!this.isJumping) this.player.anims.play('walk', true);
+        } else {
+            this.player.setVelocityX(0);
+            if (!this.isJumping) this.player.setFrame(0);
+        }
+    
+        if (!this.isAttacking && (attackPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
+            this.isAttacking = true;
+            this.player.setVelocityX(0);
+            this.player.anims.play('attack', true);
+        }
+
+        else if (!this.isAttacking && (attackPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
+            this.isAttacking = true;
+            this.player.setVelocityX(0);
+            this.player.anims.play('attack2', true);
+
+            this.performAirAttack();
+        }
+
+        if (!this.bonusActive && !this.bonusWasActivated && this.player.y <= 0) {
+            this.bonusWasActivated = true;
+            this.activateBonus();
+        }
+
+        if (this.bonusActive && this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.endBonus();
+        }
+
+        if (this.bonusActive) {
+            const elapsed = this.time.now - this.bonusStartTime;
+            const remaining = Math.max(0, this.bonusTimeLeft - elapsed);
+            const seconds = (remaining / 1000).toFixed(1);
+        
+            this.bonusText.setText(`${seconds}`);
+            this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
+        }
+    }
+}

@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "Nivel1.tmx",
+    "activeFile": "Nivel2.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -11,18 +11,48 @@
         "": {
             "scaleInEditor": 1
         },
+        "#bloques": {
+            "scaleInDock": 1
+        },
+        "#copos": {
+            "scaleInDock": 1
+        },
         "#copos2": {
             "scaleInEditor": 1
+        },
+        "#hielo": {
+            "scaleInDock": 1
+        },
+        "#nube": {
+            "scaleInDock": 1
+        },
+        "#numeros": {
+            "scaleInDock": 1
+        },
+        "#numeros2": {
+            "scaleInDock": 1
+        },
+        "#paredazul": {
+            "scaleInDock": 1
+        },
+        "#paredmarron": {
+            "scaleInDock": 1
+        },
+        "#paredverde": {
+            "scaleInDock": 1
+        },
+        "#paredverdes": {
+            "scaleInDock": 1
         },
         "#spritesheet": {
             "scaleInEditor": 1
         },
         "Nivel1.tmx": {
-            "scale": 1.5,
+            "scale": 0.5,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 341.6666666666667,
-                "y": 1260
+                "x": 468,
+                "y": 1106
             }
         },
         "Nivel1.tmx#bloques": {
@@ -65,23 +95,69 @@
         },
         "Nivel1.tmx#spritesheet": {
             "scaleInDock": 1
+        },
+        "Nivel2.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 236.66666666666669,
+                "y": 1397.3333333333333
+            }
+        },
+        "Nivel2.tmx#bloques": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#copos": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#copos2": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#hielo": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#marronbonus": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#nube": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#numeros": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#numeros2": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#paredazul": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#paredmarron": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#paredverde": {
+            "scaleInDock": 1
+        },
+        "Nivel2.tmx#paredverdes": {
+            "scaleInDock": 1
         }
     },
     "last.exportedFilePath": "C:/Users/Usuario/Desktop/Programacion/Tp_Ice-Climber/public/assets",
-    "last.imagePath": "C:/Users/Usuario/Desktop/Tiled",
+    "last.imagePath": "C:/Users/Usuario/Desktop/Programacion/Tp_Ice-Climber/public/assets",
     "map.height": 130,
-    "map.lastUsedExportFilter": "Todos los archivos (*)",
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
     "map.width": 32,
     "openFiles": [
-        "Nivel1.tmx"
+        "Nivel1.tmx",
+        "Nivel2.tmx"
     ],
     "project": "Nivel1.tiled-project",
-    "property.type": "object",
+    "property.type": "bool",
     "recentFiles": [
-        "Nivel1.tmx"
+        "Nivel1.tmx",
+        "Nivel2.tmx"
     ],
     "tileset.embedInMap": true,
     "tileset.tileSize": {

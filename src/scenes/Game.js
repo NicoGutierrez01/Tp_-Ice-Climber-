@@ -56,6 +56,22 @@ export class Game extends Scene {
         this.physics.add.collider(this.player, this.plataformas);
         this.physics.add.collider(this.player, hielos);
 
+        // ancho y alto deseados
+        const newWidth  = 10;
+        const newHeight = 40;
+
+        // medidas originales
+        const originalWidth  = this.player.body.width;
+        const originalHeight = this.player.body.height;
+
+        // offsets para centrar la hitbox
+        const offsetX = (originalWidth  - newWidth)  / 2;
+        const offsetY = (originalHeight - newHeight) / 2;
+
+        // aplico nuevo tamaño y posición
+        this.player.body.setSize(newWidth, newHeight);
+        this.player.body.setOffset(offsetX, offsetY * 2); 
+
         Nubes(this, -175);
         Nubes(this, -430);
 
@@ -220,12 +236,61 @@ export class Game extends Scene {
             attack2: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
 
+        this.attackHitboxes = this.physics.add.group({
+            allowGravity: false,
+            immovable: true
+          });
+          
+          // 2) Configurá los overlaps entre ese grupo y tus enemigos
+          //    – Para los Yetis:
+          this.physics.add.overlap(
+            this.attackHitboxes,
+            this.yetiManager.yetis,
+            (hitbox, yeti) => {
+              // 1) determinar dirección contraria
+              const dir = yeti.body.velocity.x >= 0 ? -1 : +1;
+              // 2) crear el twin
+              const twin = this.physics.add.sprite(yeti.x, yeti.y, 'yeti-death');
+              twin.play('yeti-death');
+              // que se mueva sólo en X al lado opuesto
+              twin.setVelocityX(100 * dir);
+              twin.body.setAllowGravity(false);
+          
+              // 3) destruir el yeti original
+              yeti.destroy();
+              hitbox.destroy();
+            },
+            null,
+            this
+        );
+          //    – Para los pájaros enemigos (si los guardás en un grupo `this.enemyBirds`):
+        this.physics.add.overlap(
+            this.attackHitboxes,
+            this.enemyBirds,
+            (hitbox, bird) => {
+              // generamos twin
+              const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
+              twin.body.setAllowGravity(true);
+              twin.play('bird-death');
+              twin.setVelocityY(50);
+          
+              // destruimos el pájaro original
+              bird.destroy();
+              hitbox.destroy();
+            },
+            null,
+            this
+        );
+          
         this.inputManager = new InputManager(this);
         this.inputManager.setup();
 
+        this.prevAttackPad1 = false;
+        this.prevAttackPad2 = false;
+
         this.anims.create({
             key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 5}),
+            frames: this.anims.generateFrameNumbers('player', { start: 2, end: 5}),
             frameRate: 15
         });
         this.anims.create({
@@ -251,8 +316,22 @@ export class Game extends Scene {
 
         this.anims.create({
             key: 'enemy-bird-fly',
-            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 1, end: 4 }),
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 4, end: 7 }),
             frameRate: 6,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'bird-death',
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 0, end: 3 }),
+            frameRate: 4,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'yeti-death',
+            frames: this.anims.generateFrameNumbers('yeti', { start: 6, end: 9 }),
+            frameRate: 10,
             repeat: -1
         });
 
@@ -260,7 +339,7 @@ export class Game extends Scene {
             delay: 8000,           
             callback: () => {
                 const bird = PajaroEnemigo(this, 100, 300, 80, 1);
-                this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+                this.enemyBirds.add(bird); 
             }
           });
           
@@ -362,15 +441,44 @@ export class Game extends Scene {
             this
           );
 
-          this.time.addEvent({
+        this.enemyBirds = this.physics.add.group({
+            allowGravity: true,
+            immovable: false
+        });
+    
+        this.time.addEvent({
             delay: 8000,
             callback: () => {
               const bird = PajaroEnemigo(this, 100, 300, 80, 1);
-              this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+              this.physics.add.overlap(
+                this.player,
+                this.enemyBirds,
+                this.onPlayerHitsBird,   // tu callback de “twin” y muerte
+                null,
+                this
+              );
             },
             loop: true
-          });
+        });
+        
+        this.deathTwins = this.add.group();
+    }
 
+    onPlayerHitsBird(player, bird) {
+        // 1) clonamos y hacemos caer el “twin”
+        const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
+        twin.body.setAllowGravity(true);
+        twin.setVelocityY(100);
+        twin.play('bird-death');
+      
+        // 2) destruimos el pájaro original
+        bird.destroy();
+      
+        // 3) opcional: cuando el twin salga de cámara, lo destruyes
+        this.time.addEvent({
+          delay: 3000,            // tiempo suficiente para caer
+          callback: () => twin.destroy()
+        });
     }
 
     collectBerenjena(player, berenjena) {
@@ -433,7 +541,6 @@ export class Game extends Scene {
         let menorDistancia = Infinity;
     
         this.bloques.forEach(bloque => {
-            // sólo bloques arriba del jugador
             if (bloque.y >= this.player.y) {
                 return;
             }
@@ -464,11 +571,28 @@ export class Game extends Scene {
     
             this.score += 10;
         }
-    }    
+    }  
+    
+    spawnAttackHitbox() {
+        const offsetX = this.player.flipX ? -20 : +20;
+        const x = this.player.x + offsetX;
+        const y = this.player.y + 10;    
+      
+        const zone = this.add.zone(x, y).setSize(10, 20);
+        this.physics.world.enable(zone);
+      
+        this.attackHitboxes.add(zone);
+      
+        this.time.delayedCall(100, () => {
+          zone.destroy();
+        });
+    }
     
     update() {
         this.inputManager.update();
         this.yetiManager.update();
+
+        const jumpPad = this.inputManager.pad?.buttons?.[0]?.pressed ?? false;
 
         if (this.isAttacking) {
             const targetY = this.player.y - this.cameras.main.height / 2;
@@ -488,9 +612,19 @@ export class Game extends Scene {
 
         const { x: moveX, y: moveY } = this.inputManager.getMovement();
     
-        const jumpPad    = this.inputManager.pad?.buttons?.[0]?.pressed;
-        const attackPad1 = this.inputManager.pad?.buttons?.[2]?.pressed;
-        const attackPad2 = this.inputManager.pad?.buttons?.[1]?.pressed;
+        const pad = this.inputManager.pad;
+
+        // Estado actual de los botones
+        const nowAttackPad1 = pad?.buttons?.[2]?.pressed ?? false;
+        const nowAttackPad2 = pad?.buttons?.[1]?.pressed ?? false;
+        
+        // Detectamos el “JustDown” del pad (flanco ascendente)
+        const justDownPad1 = nowAttackPad1 && !this.prevAttackPad1;
+        const justDownPad2 = nowAttackPad2 && !this.prevAttackPad2;
+        
+        // Guardamos para la próxima iteración
+        this.prevAttackPad1 = nowAttackPad1;
+        this.prevAttackPad2 = nowAttackPad2;
     
         if (!this.jumpKeyDown && ((jumpPad && onFloor) || (this.keys.up.isDown && onFloor))) {
             this.jumpKeyDown = true;
@@ -520,17 +654,16 @@ export class Game extends Scene {
             if (!this.isJumping) this.player.setFrame(0);
         }
     
-        if (!this.isAttacking && (attackPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
+        if (!this.isAttacking && (justDownPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
             this.isAttacking = true;
             this.player.setVelocityX(0);
             this.player.anims.play('attack', true);
+            this.spawnAttackHitbox();
         }
-
-        else if (!this.isAttacking && (attackPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
+        else if (!this.isAttacking && (justDownPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
             this.isAttacking = true;
             this.player.setVelocityX(0);
             this.player.anims.play('attack2', true);
-
             this.performAirAttack();
         }
 
@@ -551,5 +684,14 @@ export class Game extends Scene {
             this.bonusText.setText(`${seconds}`);
             this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
         }
+
+        this.deathTwins.getChildren().forEach(twin => {
+            if (twin.y > this.cameras.main.scrollY + this.cameras.main.height + twin.displayHeight) {
+              twin.destroy();
+            }
+            if (twin.x < -twin.displayWidth || twin.x > this.cameras.main.width + twin.displayWidth) {
+              twin.destroy();
+            }
+        });
     }
 }

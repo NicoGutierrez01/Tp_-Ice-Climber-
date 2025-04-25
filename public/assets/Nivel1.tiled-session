@@ -48,11 +48,11 @@
             "scaleInEditor": 1
         },
         "Nivel1.tmx": {
-            "scale": 0.5,
+            "scale": 2,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 468,
-                "y": 1106
+                "x": 265.5,
+                "y": 1327.5
             }
         },
         "Nivel1.tmx#bloques": {
@@ -100,8 +100,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 236.66666666666669,
-                "y": 1397.3333333333333
+                "x": 326,
+                "y": 1329.3333333333333
             }
         },
         "Nivel2.tmx#bloques": {

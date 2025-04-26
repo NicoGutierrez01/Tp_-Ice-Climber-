@@ -31,6 +31,18 @@ export class Preloader extends Scene
     {
         //  Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
+        this.load.image('1984', '1984.png');
+        this.load.image('gameover', 'Gameover.png');
+        this.load.image('nintendo', 'nintendo.png');
+        this.load.image('martillo', 'martillo.png');
+        this.load.image('timer', 'timer.png');
+        this.load.image('winnerbonus', 'winnerbonus.png');
+        this.load.image('nobonus', 'nobonus.png');
+        this.load.image('bonusstage', 'bonusstage.png');
+        this.load.image('bloquecito', 'bloquecito.png');
+        this.load.image('pajaroover', 'pajaroover.png');
+        this.load.image('piconieve', 'piconieve.png');
+
         this.load.image('bloques', 'bloques.png');
 
         this.load.image('vidas', 'Vidas.png');
@@ -120,6 +132,16 @@ export class Preloader extends Scene
         this.load.spritesheet('pajarobonus', 'PajaroBonus.png', {
             frameWidth: 64,
             frameHeight: 32
+        });
+
+        this.load.spritesheet('pjgano', 'pjgano.png', {
+            frameWidth: 42,
+            frameHeight: 51
+        });
+
+        this.load.spritesheet('pjperdio', 'pjperdio.png', {
+            frameWidth: 29,
+            frameHeight: 48
         });
     }
 

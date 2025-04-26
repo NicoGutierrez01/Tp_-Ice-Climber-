@@ -5,7 +5,7 @@ export function PajaroBonus(scene, y) {
     pajaro.body.allowGravity = false;
 
     let tweenPajaro;
-
+    let scorebonus = 0;
     const moverPajaro = () => {
         pajaro.x = 1150;
         tweenPajaro = scene.tweens.add({
@@ -29,7 +29,15 @@ export function PajaroBonus(scene, y) {
             if (tweenPajaro) tweenPajaro.stop();
 
             scene.time.delayedCall(2000, () => {
-                scene.scene.start('GameOver');
+                scorebonus += 3000;
+                scene.scene.start('GameOver', { 
+                    bloquesRotos: scene.bloquesRotos,
+                    pajarosMatados: scene.pajarosMatados,
+                    berenjenasRecolectadas: scene.berenjenasRecolectadas,
+                    score: scene.score,
+                    scorebonus: scene.scorebonus,
+                    bonusResult: 'won'
+                });
             });
 
             overlap.destroy();

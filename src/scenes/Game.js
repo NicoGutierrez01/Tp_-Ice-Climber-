@@ -12,9 +12,18 @@ export class Game extends Scene {
         super('Game');
         this.maxLives = 3;
         this.score = 0;
+        this.bloquesRotos = 0;
+        this.pajarosMatados = 0;
+        this.berenjenasRecolectadas = 0;
     }
-
+    init(data) {
+        this.totalScore = data.score || 0;
+        this.bloquesRotos = data.bloquesRotos || 0;
+        this.pajarosMatados = data.pajarosMatados || 0;
+        this.berenjenasRecolectadas = data.berenjenasRecolectadas || 0;
+    }
     create() {
+
         this.anims.remove('yeti-walk');
         this.anims.remove('pajaro');
         this.anims.remove('enemy-bird-fly');
@@ -212,6 +221,9 @@ export class Game extends Scene {
         map.createLayer("Copo",        copos,      256, -1300);
         map.createLayer("Copo2",       copos2,     256, -1300);
 
+        this.add.image(325, -390, 'timer').setScale(1.6);
+        this.add.image(325, -835, 'timer').setScale(1.6);
+
         this.cameras.main.setZoom(2);
         this.cameras.main.setBounds(0, -10000, 800, 10780);
 
@@ -240,41 +252,37 @@ export class Game extends Scene {
             allowGravity: false,
             immovable: true
           });
-          
-          // 2) Configurá los overlaps entre ese grupo y tus enemigos
-          //    – Para los Yetis:
+
           this.physics.add.overlap(
             this.attackHitboxes,
             this.yetiManager.yetis,
             (hitbox, yeti) => {
-              // 1) determinar dirección contraria
+
               const dir = yeti.body.velocity.x >= 0 ? -1 : +1;
-              // 2) crear el twin
+
               const twin = this.physics.add.sprite(yeti.x, yeti.y, 'yeti-death');
               twin.play('yeti-death');
-              // que se mueva sólo en X al lado opuesto
+
               twin.setVelocityX(100 * dir);
               twin.body.setAllowGravity(false);
-          
-              // 3) destruir el yeti original
+
               yeti.destroy();
               hitbox.destroy();
             },
             null,
             this
         );
-          //    – Para los pájaros enemigos (si los guardás en un grupo `this.enemyBirds`):
+
         this.physics.add.overlap(
             this.attackHitboxes,
             this.enemyBirds,
             (hitbox, bird) => {
-              // generamos twin
+
               const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
               twin.body.setAllowGravity(true);
               twin.play('bird-death');
               twin.setVelocityY(50);
           
-              // destruimos el pájaro original
               bird.destroy();
               hitbox.destroy();
             },
@@ -411,6 +419,7 @@ export class Game extends Scene {
                     fx.play(`${tipo}-break`);
                     fx.once('animationcomplete', () => fx.destroy());
 
+                    this.bloquesRotos++;
                     this.score += 10;
                   }
             }
@@ -427,9 +436,18 @@ export class Game extends Scene {
             stroke: '#000000',
             strokeThickness: 4
         });
+        this.bonusText2 = this.add.text(0, 0, '', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
         this.bonusText.setVisible(false);
 
         this.bonusText.setDepth(1000);
+        this.bonusText2.setVisible(false);
+
+        this.bonusText2.setDepth(1000);
 
         this.berenjenas = new Berenjena(this, this.bloques, this.player);
 
@@ -453,7 +471,7 @@ export class Game extends Scene {
               this.physics.add.overlap(
                 this.player,
                 this.enemyBirds,
-                this.onPlayerHitsBird,   // tu callback de “twin” y muerte
+                this.onPlayerHitsBird,  
                 null,
                 this
               );
@@ -462,27 +480,28 @@ export class Game extends Scene {
         });
         
         this.deathTwins = this.add.group();
+
     }
 
     onPlayerHitsBird(player, bird) {
-        // 1) clonamos y hacemos caer el “twin”
         const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
         twin.body.setAllowGravity(true);
         twin.setVelocityY(100);
         twin.play('bird-death');
       
-        // 2) destruimos el pájaro original
         bird.destroy();
+        this.pajarosMatados++;
+        this.score += 800;
       
-        // 3) opcional: cuando el twin salga de cámara, lo destruyes
         this.time.addEvent({
-          delay: 3000,            // tiempo suficiente para caer
+          delay: 3000,         
           callback: () => twin.destroy()
         });
     }
 
     collectBerenjena(player, berenjena) {
         berenjena.destroy();
+        this.berenjenasRecolectadas++;
         this.score += 400;
     }
 
@@ -496,7 +515,12 @@ export class Game extends Scene {
             icono.destroy();
         }
         if (this.lives <= 0) {
-            this.scene.start('GameOver', { score: this.score });
+            this.scene.start('GameOver', { 
+                bloquesRotos: this.bloquesRotos,
+                pajarosMatados: this.pajarosMatados,
+                berenjenasRecolectadas: this.berenjenasRecolectadas,
+                score: this.score,
+             });
         }
     }
     
@@ -505,6 +529,7 @@ export class Game extends Scene {
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
         this.bonusText.setVisible(true);
+        this.bonusText2.setVisible(true);
 
         const coords = [
             { x: 370, y: -100 },
@@ -523,6 +548,7 @@ export class Game extends Scene {
     endBonus(success) {
         this.bonusActive = false;
         this.bonusText.setVisible(false);
+        this.bonusText2.setVisible(true);
     
         if (this.bonusTimer) {
             this.bonusTimer.remove();
@@ -532,7 +558,10 @@ export class Game extends Scene {
             console.log("¡Bonus completado!");
         } else {
             console.log("¡Game Over por no completar el bonus!");
-            this.scene.start('GameOver', { score: this.score });
+            this.scene.start('GameOver', { 
+                score: this.score,
+                bonusResult: 'timeout'
+             });
         }
     }
 
@@ -568,7 +597,7 @@ export class Game extends Scene {
             const fx = this.add.sprite(x, y, `${tipo}anim`);
             fx.play(`${tipo}-break`);
             fx.once('animationcomplete', () => fx.destroy());
-    
+            this.bloquesRotos++;
             this.score += 10;
         }
     }  
@@ -606,6 +635,14 @@ export class Game extends Scene {
         this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
 
         if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.scene.start('GameOver', {
+                bloquesRotos: this.bloquesRotos,
+                pajarosMatados: this.pajarosMatados,
+                berenjenasRecolectadas: this.berenjenasRecolectadas,
+                score: this.score,
+                bonusResult: 'no bonus'
+            });
+            return;
         }
 
         const onFloor = this.player.body.onFloor();
@@ -614,15 +651,12 @@ export class Game extends Scene {
     
         const pad = this.inputManager.pad;
 
-        // Estado actual de los botones
         const nowAttackPad1 = pad?.buttons?.[2]?.pressed ?? false;
         const nowAttackPad2 = pad?.buttons?.[1]?.pressed ?? false;
-        
-        // Detectamos el “JustDown” del pad (flanco ascendente)
+
         const justDownPad1 = nowAttackPad1 && !this.prevAttackPad1;
         const justDownPad2 = nowAttackPad2 && !this.prevAttackPad2;
-        
-        // Guardamos para la próxima iteración
+
         this.prevAttackPad1 = nowAttackPad1;
         this.prevAttackPad2 = nowAttackPad2;
     
@@ -682,7 +716,14 @@ export class Game extends Scene {
             const seconds = (remaining / 1000).toFixed(1);
         
             this.bonusText.setText(`${seconds}`);
-            this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
+            this.bonusText.setPosition(294, -390);
+            this.bonusText.setScale(1.3);
+            this.bonusText.setColor('#ff8473');
+
+            this.bonusText2.setText(`${seconds}`);
+            this.bonusText2.setPosition(294, -835);
+            this.bonusText2.setScale(1.3);
+            this.bonusText2.setColor('#ff8473');
         }
 
         this.deathTwins.getChildren().forEach(twin => {

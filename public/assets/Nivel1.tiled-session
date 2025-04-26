@@ -3,12 +3,13 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "Nivel2.tmx",
+    "activeFile": "Nivel1.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
         "": {
+            "scaleInDock": 4,
             "scaleInEditor": 1
         },
         "#bloques": {
@@ -48,11 +49,11 @@
             "scaleInEditor": 1
         },
         "Nivel1.tmx": {
-            "scale": 2,
-            "selectedLayer": 9,
+            "scale": 0.75,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 265.5,
-                "y": 1327.5
+                "x": 138.66666666666669,
+                "y": 911.9999999999999
             }
         },
         "Nivel1.tmx#bloques": {
@@ -96,12 +97,15 @@
         "Nivel1.tmx#spritesheet": {
             "scaleInDock": 1
         },
+        "Nivel1.tmx#timer": {
+            "scaleInEditor": 1
+        },
         "Nivel2.tmx": {
             "scale": 1.5,
-            "selectedLayer": 0,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 326,
-                "y": 1329.3333333333333
+                "x": 157.33333333333334,
+                "y": 991.3333333333333
             }
         },
         "Nivel2.tmx#bloques": {
@@ -156,12 +160,12 @@
     "project": "Nivel1.tiled-project",
     "property.type": "bool",
     "recentFiles": [
-        "Nivel1.tmx",
-        "Nivel2.tmx"
+        "Nivel2.tmx",
+        "Nivel1.tmx"
     ],
     "tileset.embedInMap": true,
     "tileset.tileSize": {
-        "height": 16,
-        "width": 16
+        "height": 25,
+        "width": 41
     }
 }

@@ -4,7 +4,7 @@ import { Nubes } from '../objetos/Nubes';
 import { HileraBloques } from '../objetos/HileraBloques';
 import { Yeti } from '../objetos/Yeti';
 import { PajaroEnemigo } from '../objetos/PajaroEnemigo';
-import { Zanahoria } from '../objetos/Zanahoria';
+import { Berenjena } from '../objetos/Berenjena';
 import { InputManager } from '../components/InputManager';
 
 export class Nivel2 extends Scene {
@@ -12,9 +12,18 @@ export class Nivel2 extends Scene {
         super('Nivel2');
         this.maxLives = 3;
         this.score = 0;
+        this.bloquesRotos = 0;
+        this.pajarosMatados = 0;
+        this.berenjenasRecolectadas = 0;
     }
-
+    init(data) {
+        this.totalScore = data.score || 0;
+        this.bloquesRotos = data.bloquesRotos || 0;
+        this.pajarosMatados = data.pajarosMatados || 0;
+        this.berenjenasRecolectadas = data.berenjenasRecolectadas || 0;
+    }
     create() {
+
         this.anims.remove('yeti-walk');
         this.anims.remove('pajaro');
         this.anims.remove('enemy-bird-fly');
@@ -53,9 +62,25 @@ export class Nivel2 extends Scene {
         this.plataformas = map.createLayer("Bloque", bloques, 256, -1300);
         this.plataformas.setCollisionByProperty({ colision: true });
 
-        this.player = this.physics.add.sprite(512, -600, 'player').setScale(0.9);
+        this.player = this.physics.add.sprite(512, 730, 'player').setScale(0.9);
         this.physics.add.collider(this.player, this.plataformas);
         this.physics.add.collider(this.player, hielos);
+
+        // ancho y alto deseados
+        const newWidth  = 10;
+        const newHeight = 40;
+
+        // medidas originales
+        const originalWidth  = this.player.body.width;
+        const originalHeight = this.player.body.height;
+
+        // offsets para centrar la hitbox
+        const offsetX = (originalWidth  - newWidth)  / 2;
+        const offsetY = (originalHeight - newHeight) / 2;
+
+        // aplico nuevo tamaño y posición
+        this.player.body.setSize(newWidth, newHeight);
+        this.player.body.setOffset(offsetX, offsetY * 2); 
 
         Nubes(this, -159);
         Nubes(this, -303);
@@ -183,7 +208,10 @@ export class Nivel2 extends Scene {
         map.createLayer("Copo",        copos,      256, -1300);
         map.createLayer("Copo2",       copos2,     256, -1300);
 
+        this.add.image(325, -390, 'timer').setScale(1.6);
+        this.add.image(325, -835, 'timer').setScale(1.6);
 
+        this.cameras.main.setZoom(2);
         this.cameras.main.setBounds(0, -10000, 800, 10780);
 
         this.lives = this.maxLives;
@@ -207,12 +235,57 @@ export class Nivel2 extends Scene {
             attack2: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
 
+        this.attackHitboxes = this.physics.add.group({
+            allowGravity: false,
+            immovable: true
+          });
+
+          this.physics.add.overlap(
+            this.attackHitboxes,
+            this.yetiManager.yetis,
+            (hitbox, yeti) => {
+
+              const dir = yeti.body.velocity.x >= 0 ? -1 : +1;
+
+              const twin = this.physics.add.sprite(yeti.x, yeti.y, 'yeti-death');
+              twin.play('yeti-death');
+
+              twin.setVelocityX(100 * dir);
+              twin.body.setAllowGravity(false);
+
+              yeti.destroy();
+              hitbox.destroy();
+            },
+            null,
+            this
+        );
+
+        this.physics.add.overlap(
+            this.attackHitboxes,
+            this.enemyBirds,
+            (hitbox, bird) => {
+
+              const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
+              twin.body.setAllowGravity(true);
+              twin.play('bird-death');
+              twin.setVelocityY(50);
+          
+              bird.destroy();
+              hitbox.destroy();
+            },
+            null,
+            this
+        );
+          
         this.inputManager = new InputManager(this);
         this.inputManager.setup();
 
+        this.prevAttackPad1 = false;
+        this.prevAttackPad2 = false;
+
         this.anims.create({
             key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 5}),
+            frames: this.anims.generateFrameNumbers('player', { start: 2, end: 5}),
             frameRate: 15
         });
         this.anims.create({
@@ -238,8 +311,22 @@ export class Nivel2 extends Scene {
 
         this.anims.create({
             key: 'enemy-bird-fly',
-            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 1, end: 4 }),
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 4, end: 7 }),
             frameRate: 6,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'bird-death',
+            frames: this.anims.generateFrameNumbers('pajaroenemigo', { start: 0, end: 3 }),
+            frameRate: 4,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'yeti-death',
+            frames: this.anims.generateFrameNumbers('yeti', { start: 6, end: 9 }),
+            frameRate: 10,
             repeat: -1
         });
 
@@ -247,7 +334,7 @@ export class Nivel2 extends Scene {
             delay: 8000,           
             callback: () => {
                 const bird = PajaroEnemigo(this, 100, 300, 80, 1);
-                this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+                this.enemyBirds.add(bird); 
             }
           });
           
@@ -319,6 +406,7 @@ export class Nivel2 extends Scene {
                     fx.play(`${tipo}-break`);
                     fx.once('animationcomplete', () => fx.destroy());
 
+                    this.bloquesRotos++;
                     this.score += 10;
                   }
             }
@@ -335,33 +423,72 @@ export class Nivel2 extends Scene {
             stroke: '#000000',
             strokeThickness: 4
         });
+        this.bonusText2 = this.add.text(0, 0, '', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
         this.bonusText.setVisible(false);
 
         this.bonusText.setDepth(1000);
+        this.bonusText2.setVisible(false);
 
-        this.zanahorias = new Zanahoria(this, this.bloques, this.player);
+        this.bonusText2.setDepth(1000);
+
+        this.berenjenas = new Berenjena(this, this.bloques, this.player);
 
         this.physics.add.overlap(
             this.player,
-            this.zanahorias.group,
+            this.berenjenas.group,
             this.collectBerenjena,
             null,
             this
           );
 
-          this.time.addEvent({
+        this.enemyBirds = this.physics.add.group({
+            allowGravity: true,
+            immovable: false
+        });
+    
+        this.time.addEvent({
             delay: 8000,
             callback: () => {
               const bird = PajaroEnemigo(this, 100, 300, 80, 1);
-              this.physics.add.overlap(this.player, bird, this.hitEnemy, null, this);
+              this.physics.add.overlap(
+                this.player,
+                this.enemyBirds,
+                this.onPlayerHitsBird,  
+                null,
+                this
+              );
             },
             loop: true
-          });
+        });
+        
+        this.deathTwins = this.add.group();
 
     }
 
-    collectBerenjena(player, zanahoria) {
-        zanahoria.destroy();
+    onPlayerHitsBird(player, bird) {
+        const twin = this.physics.add.sprite(bird.x, bird.y, 'bird-death');
+        twin.body.setAllowGravity(true);
+        twin.setVelocityY(100);
+        twin.play('bird-death');
+      
+        bird.destroy();
+        this.pajarosMatados++;
+        this.score += 800;
+      
+        this.time.addEvent({
+          delay: 3000,         
+          callback: () => twin.destroy()
+        });
+    }
+
+    collectBerenjena(player, berenjena) {
+        berenjena.destroy();
+        this.berenjenasRecolectadas++;
         this.score += 400;
     }
 
@@ -375,7 +502,12 @@ export class Nivel2 extends Scene {
             icono.destroy();
         }
         if (this.lives <= 0) {
-            this.scene.start('GameOver', { score: this.score });
+            this.scene.start('GameOver', { 
+                bloquesRotos: this.bloquesRotos,
+                pajarosMatados: this.pajarosMatados,
+                berenjenasRecolectadas: this.berenjenasRecolectadas,
+                score: this.score,
+             });
         }
     }
     
@@ -384,13 +516,14 @@ export class Nivel2 extends Scene {
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
         this.bonusText.setVisible(true);
+        this.bonusText2.setVisible(true);
 
         const coords = [
-            { x: 368, y: -100 },
-            { x: 598, y: -277 },
-            { x: 466, y: -372 }
+            { x: 370, y: -100 },
+            { x: 590, y: -276 },
+            { x: 460, y: -372 }
           ];
-        this.zanahorias.spawnAtPositions(coords);
+        this.berenjenas.spawnAtPositions(coords);
     
         this.bonusTimer = this.time.delayedCall(this.bonusTimeLeft, () => {
             this.endBonus(false);
@@ -402,6 +535,7 @@ export class Nivel2 extends Scene {
     endBonus(success) {
         this.bonusActive = false;
         this.bonusText.setVisible(false);
+        this.bonusText2.setVisible(true);
     
         if (this.bonusTimer) {
             this.bonusTimer.remove();
@@ -411,7 +545,10 @@ export class Nivel2 extends Scene {
             console.log("¡Bonus completado!");
         } else {
             console.log("¡Game Over por no completar el bonus!");
-            this.scene.start('GameOver', { score: this.score });
+            this.scene.start('GameOver', { 
+                score: this.score,
+                bonusResult: 'timeout'
+             });
         }
     }
 
@@ -420,7 +557,6 @@ export class Nivel2 extends Scene {
         let menorDistancia = Infinity;
     
         this.bloques.forEach(bloque => {
-            // sólo bloques arriba del jugador
             if (bloque.y >= this.player.y) {
                 return;
             }
@@ -448,14 +584,31 @@ export class Nivel2 extends Scene {
             const fx = this.add.sprite(x, y, `${tipo}anim`);
             fx.play(`${tipo}-break`);
             fx.once('animationcomplete', () => fx.destroy());
-    
+            this.bloquesRotos++;
             this.score += 10;
         }
-    }    
+    }  
+    
+    spawnAttackHitbox() {
+        const offsetX = this.player.flipX ? -20 : +20;
+        const x = this.player.x + offsetX;
+        const y = this.player.y + 10;    
+      
+        const zone = this.add.zone(x, y).setSize(10, 20);
+        this.physics.world.enable(zone);
+      
+        this.attackHitboxes.add(zone);
+      
+        this.time.delayedCall(100, () => {
+          zone.destroy();
+        });
+    }
     
     update() {
         this.inputManager.update();
         this.yetiManager.update();
+
+        const jumpPad = this.inputManager.pad?.buttons?.[0]?.pressed ?? false;
 
         if (this.isAttacking) {
             const targetY = this.player.y - this.cameras.main.height / 2;
@@ -469,15 +622,30 @@ export class Nivel2 extends Scene {
         this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
 
         if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.scene.start('GameOver', {
+                bloquesRotos: this.bloquesRotos,
+                pajarosMatados: this.pajarosMatados,
+                berenjenasRecolectadas: this.berenjenasRecolectadas,
+                score: this.score,
+                bonusResult: 'no bonus'
+            });
+            return;
         }
 
         const onFloor = this.player.body.onFloor();
 
         const { x: moveX, y: moveY } = this.inputManager.getMovement();
     
-        const jumpPad    = this.inputManager.pad?.buttons?.[0]?.pressed;
-        const attackPad1 = this.inputManager.pad?.buttons?.[2]?.pressed;
-        const attackPad2 = this.inputManager.pad?.buttons?.[1]?.pressed;
+        const pad = this.inputManager.pad;
+
+        const nowAttackPad1 = pad?.buttons?.[2]?.pressed ?? false;
+        const nowAttackPad2 = pad?.buttons?.[1]?.pressed ?? false;
+
+        const justDownPad1 = nowAttackPad1 && !this.prevAttackPad1;
+        const justDownPad2 = nowAttackPad2 && !this.prevAttackPad2;
+
+        this.prevAttackPad1 = nowAttackPad1;
+        this.prevAttackPad2 = nowAttackPad2;
     
         if (!this.jumpKeyDown && ((jumpPad && onFloor) || (this.keys.up.isDown && onFloor))) {
             this.jumpKeyDown = true;
@@ -507,17 +675,16 @@ export class Nivel2 extends Scene {
             if (!this.isJumping) this.player.setFrame(0);
         }
     
-        if (!this.isAttacking && (attackPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
+        if (!this.isAttacking && (justDownPad1 || Phaser.Input.Keyboard.JustDown(this.keys.attack))) {
             this.isAttacking = true;
             this.player.setVelocityX(0);
             this.player.anims.play('attack', true);
+            this.spawnAttackHitbox();
         }
-
-        else if (!this.isAttacking && (attackPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
+        else if (!this.isAttacking && (justDownPad2 || Phaser.Input.Keyboard.JustDown(this.keys.attack2))) {
             this.isAttacking = true;
             this.player.setVelocityX(0);
             this.player.anims.play('attack2', true);
-
             this.performAirAttack();
         }
 
@@ -536,7 +703,23 @@ export class Nivel2 extends Scene {
             const seconds = (remaining / 1000).toFixed(1);
         
             this.bonusText.setText(`${seconds}`);
-            this.bonusText.setPosition(this.cameras.main.scrollX + 280, this.cameras.main.scrollY + 220);
+            this.bonusText.setPosition(294, -390);
+            this.bonusText.setScale(1.3);
+            this.bonusText.setColor('#ff8473');
+
+            this.bonusText2.setText(`${seconds}`);
+            this.bonusText2.setPosition(294, -835);
+            this.bonusText2.setScale(1.3);
+            this.bonusText2.setColor('#ff8473');
         }
+
+        this.deathTwins.getChildren().forEach(twin => {
+            if (twin.y > this.cameras.main.scrollY + this.cameras.main.height + twin.displayHeight) {
+              twin.destroy();
+            }
+            if (twin.x < -twin.displayWidth || twin.x > this.cameras.main.width + twin.displayWidth) {
+              twin.destroy();
+            }
+        });
     }
 }

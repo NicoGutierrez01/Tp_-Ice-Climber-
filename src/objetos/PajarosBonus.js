@@ -30,6 +30,10 @@ export function PajaroBonus(scene, y) {
 
             scene.time.delayedCall(2000, () => {
                 scorebonus += 3000;
+                if (scene.musica2) {
+                    scene.musica2.stop();  
+                }
+
                 scene.scene.start('GameOver', { 
                     bloquesRotos: scene.bloquesRotos,
                     pajarosMatados: scene.pajarosMatados,

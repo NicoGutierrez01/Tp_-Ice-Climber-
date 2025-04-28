@@ -33,9 +33,11 @@ export class Preloader extends Scene
         this.load.setPath('assets');
         this.load.image('1984', '1984.png');
         this.load.image('gameover', 'Gameover.png');
+        this.load.image('gameover2', 'gameover2.png');
         this.load.image('nintendo', 'nintendo.png');
         this.load.image('martillo', 'martillo.png');
         this.load.image('timer', 'timer.png');
+        this.load.image('timer2', 'timer2.png');
         this.load.image('winnerbonus', 'winnerbonus.png');
         this.load.image('nobonus', 'nobonus.png');
         this.load.image('bonusstage', 'bonusstage.png');
@@ -77,12 +79,17 @@ export class Preloader extends Scene
 
         this.load.tilemapTiledJSON('map', 'Nivel1.json');
         this.load.tilemapTiledJSON('map2', 'Nivel2.json');
+        this.load.tilemapTiledJSON('map3', 'Start.json');
 
         this.load.image('logo', 'logo.png');
 
 
         this.load.image('nubelarga', 'nubelarga.png');
 
+        this.load.spritesheet('pjmuerte', 'pjmuerte.png', {
+            frameWidth: 32,
+            frameHeight: 42
+        });
 
         this.load.spritesheet('player', 'Player.png', {
             frameWidth: 43,
@@ -143,6 +150,20 @@ export class Preloader extends Scene
             frameWidth: 29,
             frameHeight: 48
         });
+
+        this.load.spritesheet('pajarostart', 'pajarostart.png', {
+            frameWidth: 64,
+            frameHeight: 62
+        });
+
+        this.load.setPath('audio');
+
+        this.load.audio('BonusStage', 'BonusStage.mp3');
+        this.load.audio('GameStart', 'GameStart.mp3');
+        this.load.audio('MainTheme', 'MainTheme.mp3');
+        this.load.audio('StageClear', 'StageClear.mp3');
+        this.load.audio('StageFail', 'StageFail.mp3');
+        this.load.audio('StageSelect', 'StageSelect.mp3');
     }
 
     create ()

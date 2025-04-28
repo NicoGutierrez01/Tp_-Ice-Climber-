@@ -23,7 +23,6 @@ export class Nivel2 extends Scene {
         this.berenjenasRecolectadas = data.berenjenasRecolectadas || 0;
     }
     create() {
-
         this.anims.remove('yeti-walk');
         this.anims.remove('pajaro');
         this.anims.remove('enemy-bird-fly');
@@ -32,6 +31,10 @@ export class Nivel2 extends Scene {
         this.anims.remove('jump');
         this.anims.remove('attack');
         this.anims.remove('attack2');
+
+        this.musica = this.sound.add('MainTheme', { volume: 0.5 });
+        this.musica.play();
+        this.musica2 = this.sound.add('BonusStage', { volume: 0.5 });
 
         this.cameras.main.setBackgroundColor("000000");
         const screenW = this.scale.width;
@@ -502,6 +505,8 @@ export class Nivel2 extends Scene {
             icono.destroy();
         }
         if (this.lives <= 0) {
+            this.musica.stop();
+            this.musica2.stop();
             this.scene.start('GameOver', { 
                 bloquesRotos: this.bloquesRotos,
                 pajarosMatados: this.pajarosMatados,
@@ -512,6 +517,9 @@ export class Nivel2 extends Scene {
     }
     
     activateBonus() {
+        this.musica.stop();
+        this.musica2.play();
+        this.add.image(512, -200, 'bonusstage').setScale(1);
         this.lifeIcons.forEach(icono => icono.setVisible(false));
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
@@ -545,6 +553,8 @@ export class Nivel2 extends Scene {
             console.log("¡Bonus completado!");
         } else {
             console.log("¡Game Over por no completar el bonus!");
+            this.musica.stop();
+            this.musica2.stop();
             this.scene.start('GameOver', { 
                 score: this.score,
                 bonusResult: 'timeout'
@@ -622,6 +632,8 @@ export class Nivel2 extends Scene {
         this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
 
         if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.musica.stop();
+            this.musica2.stop();
             this.scene.start('GameOver', {
                 bloquesRotos: this.bloquesRotos,
                 pajarosMatados: this.pajarosMatados,

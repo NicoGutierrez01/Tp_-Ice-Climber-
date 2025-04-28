@@ -33,6 +33,9 @@ export class Game extends Scene {
         this.anims.remove('attack');
         this.anims.remove('attack2');
 
+        this.musica = this.sound.add('MainTheme', { volume: 0.5 });
+        this.musica.play();
+        this.musica2 = this.sound.add('BonusStage', { volume: 0.5 });
         this.cameras.main.setBackgroundColor("000000");
         const screenW = this.scale.width;
 
@@ -238,6 +241,13 @@ export class Game extends Scene {
                 .setScale(0.7);  
             this.lifeIcons.push(icon);
         }
+
+        this.anims.create({
+            key: 'pj',
+            frames: this.anims.generateFrameNumbers('pjmuerte', { start: 0, end: 3 }),
+            frameRate: 5,
+            repeat: -1
+        });
 
         this.keys = this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -505,26 +515,58 @@ export class Game extends Scene {
         this.score += 400;
     }
 
-    hitEnemy(player, enemySprite) {
-        enemySprite.disableBody(true, true);
+    hitEnemy(player, enemy) {
+        if (this.isDying) return;
+        enemy.disableBody(true, true);
     
-        this.lives -= 1;
+        this.tweens.add({ targets: this.player, alpha: 0, duration: 100, yoyo: true, repeat: 5 });
+        this.lives--;
+        const icon = this.lifeIcons.pop(); if (icon) icon.destroy();
+        if (this.lives > 0) return;
     
-        const icono = this.lifeIcons.pop();
-        if (icono) {
-            icono.destroy();
-        }
-        if (this.lives <= 0) {
-            this.scene.start('GameOver', { 
-                bloquesRotos: this.bloquesRotos,
-                pajarosMatados: this.pajarosMatados,
-                berenjenasRecolectadas: this.berenjenasRecolectadas,
-                score: this.score,
-             });
-        }
+        this.isDying = true;
+        this.cameras.main.stopFollow();
+        this.musica.stop();
+    
+        this.player.body.setAllowGravity(true);
+        this.player.anims.play('pj');
+    
+        // Tween caída del jugador: baja 100px en vez de subir
+        this.tweens.add({
+            targets: this.player,
+            y: '+=100',           // baja 100 píxeles
+            duration: 1000,
+            ease: 'Linear',
+            onComplete: () => {
+                // Hace desaparecer al jugador
+                this.player.setVisible(false);
+    
+                // Posición inicial y final de la imagen gameover2
+                const cx = 340;
+                const cyStart = this.cameras.main.scrollY + this.cameras.main.height + 10;
+                const screenPlayerY = this.player.y - this.cameras.main.scrollY;
+                const cyEnd = screenPlayerY - this.player.displayHeight - 20;
+    
+                const img = this.add.image(cx, cyStart, 'gameover2')
+                    .setScrollFactor(0)
+                    .setOrigin(0.5);
+    
+                this.tweens.add({
+                    targets: img,
+                    y: cyEnd,
+                    duration: 2000,
+                    ease: 'Power1',
+                    onComplete: () => this.scene.start('MainMenu')
+                });
+            }
+        });
     }
     
+    
     activateBonus() {
+        this.musica.stop();
+        this.musica2.play();
+        this.add.image(512, -200, 'bonusstage').setScale(1);
         this.lifeIcons.forEach(icono => icono.setVisible(false));
         this.bonusActive = true;
         this.bonusStartTime = this.time.now;
@@ -558,6 +600,8 @@ export class Game extends Scene {
             console.log("¡Bonus completado!");
         } else {
             console.log("¡Game Over por no completar el bonus!");
+            this.musica.stop();
+            this.musica2.stop();
             this.scene.start('GameOver', { 
                 score: this.score,
                 bonusResult: 'timeout'
@@ -635,6 +679,8 @@ export class Game extends Scene {
         this.cameras.main.scrollY += (this.maxReachedY - this.cameras.main.scrollY) * 0.1;
 
         if (this.player.y > this.cameras.main.scrollY + this.cameras.main.height) {
+            this.musica.stop();
+            this.musica2.stop();
             this.scene.start('GameOver', {
                 bloquesRotos: this.bloquesRotos,
                 pajarosMatados: this.pajarosMatados,

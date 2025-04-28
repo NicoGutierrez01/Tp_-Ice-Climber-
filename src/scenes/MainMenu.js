@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { InputManager } from '../components/InputManager';
 
 export class MainMenu extends Scene
 {
@@ -8,7 +9,9 @@ export class MainMenu extends Scene
     }
 
     create ()
-    {
+    {   
+        this.music = this.sound.add('StageSelect', { volume: 0.5 });
+        this.music.play();
         this.cameras.main.setBackgroundColor("000000");
         this.add.image(512, 200, 'logo').setScale(1.5);
         this.add.image(420, 701, '1984').setScale(1.2);
@@ -30,10 +33,25 @@ export class MainMenu extends Scene
         buttonplayer1.setInteractive();
 
         buttonplayer1.on('pointerdown', () => {
-
-            this.scene.start('Game');
+            this.music.stop();
+            this.scene.start('Start');
 
         });
 
+        this.input.gamepad.once('connected', (pad) => {
+            this.pad = pad;
+        });
+    }
+
+    update () {
+        if (this.pad)
+        {
+            // El botón X en la mayoría de los joysticks es el botón 2
+            if (this.pad.buttons[0].pressed)
+            {
+                this.music.stop();
+                this.scene.start('Start');
+            }
+        }
     }
 }

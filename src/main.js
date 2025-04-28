@@ -4,6 +4,7 @@ import { GameOver } from './scenes/GameOver';
 import { MainMenu } from './scenes/MainMenu';
 import { Nivel2 } from './scenes/Nivel2';
 import { Preloader } from './scenes/Preloader';
+import { Start } from './scenes/Start';
 
 
 //  Find out more information about the Game Config at:
@@ -35,6 +36,7 @@ const config = {
         Game,
         Nivel2,
         GameOver,
+        Start
     ]
 };
 

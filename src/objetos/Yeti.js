@@ -22,7 +22,7 @@ export class Yeti {
   
 
   spawnYetis() {
-    const n = Phaser.Math.Between(1, 5);
+    const n = Phaser.Math.Between(3, 6);
     for (let i = 0; i < n; i++) {
       const { x, y, tipo } = Phaser.Utils.Array.GetRandom(this.spawnPoints);
       const goLeft = Phaser.Math.Between(0, 1) === 0;

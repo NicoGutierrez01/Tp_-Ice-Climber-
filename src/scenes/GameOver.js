@@ -11,6 +11,8 @@ export class GameOver extends Phaser.Scene {
     this.level = data.level || 1;
     this.bonusResult = data.bonusResult || 'lives';
 
+    this.musicwin = this.sound.add('StageClear', { volume: 0.5 });
+    this.musicloser = this.sound.add('StageFail', { volume: 0.5 });
     // Puntos de bonus por nivel
     this.bonusScore = data.bonusScore != null
       ? data.bonusScore
@@ -38,8 +40,10 @@ export class GameOver extends Phaser.Scene {
 
     // Imagen de bonus
     if (this.bonusResult === 'won') {
+      this.musicwin.play();
       this.add.image(350, 240, 'winnerbonus').setScale(1.5);
     } else if (this.bonusResult === 'timeout') {
+      this.musicloser.play();
       this.add.image(350, 240, 'nobonus').setScale(1.5);
     }
 
@@ -72,7 +76,7 @@ export class GameOver extends Phaser.Scene {
         value: this.finalScore
       },
       {
-        icon: null,
+        icon: 'berenjena',
         xIcon: 210, y: 341,
         xLabel: 430, y: 341,
         value: this.berenjenasRecolectadas
@@ -115,6 +119,8 @@ export class GameOver extends Phaser.Scene {
       if (i >= lines.length) {
         // Al terminar, iniciar siguiente nivel con datos acumulados
         this.time.delayedCall(500, () => {
+          this.musicloser.stop();
+          this.musicwin.stop();
           this.scene.start('Nivel2', {
             level: this.level + 1,
             bloquesRotos: this.bloquesRotos,
